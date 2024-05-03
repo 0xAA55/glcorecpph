@@ -369,15 +369,15 @@ def do_parse(parsefile, glxml):
 	outs_hpp.write('#define APIENTRYP APIENTRY*\n')
 	outs_hpp.write('#endif\n')
 	outs_hpp.write('\n')
-	outs_hpp.write('\ttypedef void*(APIENTRYP Func_GetProcAddress)(const char* symbol);\n')
-	outs_hpp.write('\ttypedef float khronos_float_t;\n')
-	outs_hpp.write('\ttypedef ptrdiff_t khronos_ssize_t;\n')
-	outs_hpp.write('\ttypedef ptrdiff_t khronos_intptr_t;\n')
-	outs_hpp.write('\ttypedef int16_t khronos_int16_t;\n')
-	outs_hpp.write('\ttypedef int8_t khronos_int8_t;\n')
-	outs_hpp.write('\ttypedef uint16_t khronos_uint16_t;\n')
-	outs_hpp.write('\ttypedef int64_t khronos_int64_t;\n')
-	outs_hpp.write('\ttypedef uint64_t khronos_uint64_t;\n')
+	outs_hpp.write('\tusing Func_GetProcAddress = void*(APIENTRYP)(const char* symbol);\n')
+	outs_hpp.write('\tusing khronos_float_t = float;\n')
+	outs_hpp.write('\tusing khronos_ssize_t = ptrdiff_t;\n')
+	outs_hpp.write('\tusing khronos_intptr_t = ptrdiff_t;\n')
+	outs_hpp.write('\tusing khronos_int16_t = int16_t;\n')
+	outs_hpp.write('\tusing khronos_int8_t = int8_t;\n')
+	outs_hpp.write('\tusing khronos_uint16_t = uint16_t;\n')
+	outs_hpp.write('\tusing khronos_int64_t = int64_t;\n')
+	outs_hpp.write('\tusing khronos_uint64_t = uint64_t;\n')
 	outs_hpp.write('\n')
 	outs_hpp.write('\tclass NullFuncPtrException : public std::runtime_error\n')
 	outs_hpp.write('\t{\n')
@@ -635,7 +635,7 @@ def do_parse(parsefile, glxml):
 			rettype = fpdata['ret']
 			calltype = fpdata['calltype']
 			arglist = fpdata['arglist']
-			outs_hpp.write(f'\ttypedef {rettype} ({calltype} {functype}) ({arglist});\n')
+			outs_hpp.write(f'\tusing {functype} = {rettype} ({calltype}) ({arglist});\n')
 			csharp_delecb.write(f'\t\tpublic delegate {csret(rettype)} {functype} ({csargs(arglist)});\n')
 		outs_hpp.write('\n')
 
@@ -714,7 +714,7 @@ def do_parse(parsefile, glxml):
 			arglist = fpdata['arglist']
 			pproto = type2proto[functype]
 			proto = pproto[len(prefix):]
-			outs_hpp.write(f'\t\ttypedef {rettype} ({calltype} {functype}) ({arglist});\n')
+			outs_hpp.write(f'\t\tusing {functype} = {rettype} ({calltype}) ({arglist});\n')
 			args = [arg.strip() for arg in arglist.split(',')]
 			#if proto.startswith('Gen') and proto.endswith('s') and len(args) == 2 and args[0].endswith((' n', ' count')) and args[1].count('*') == 1 and 'const' not in args[1] and rettype == 'void':
 			if '*' in arglist:
