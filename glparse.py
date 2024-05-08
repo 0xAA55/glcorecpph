@@ -649,14 +649,14 @@ def do_parse(parsefile, glxml):
 			outs_hpp.write(f'\tclass {class_name}\n')
 			outs_csharp.write(f'\tclass {class_name}\n')
 			outs_csharp.write('\t{\n')
-			static_const_aliases = []
+			#static_const_aliases = []
 			for funcn, funcproto in curver['funcproto'].items():
 				rettype = funcproto['ret']
 				calltype = funcproto['calltype']
 				arglist = funcproto['arglist']
 				membername = funcn[len(prefix):]
 				outs_cpp.write(f'\tGLAPI {rettype} {calltype} {funcn} ({arglist});\n')
-				static_const_aliases += [f'\tconst {class_name}::PFN{funcn.upper()}PROC {class_name}::{membername} = {funcn};']
+				#static_const_aliases += [f'\tconst {class_name}::PFN{funcn.upper()}PROC {class_name}::{membername} = {funcn};']
 
 				csrettype = csret(rettype)
 				if '*' in arglist:
@@ -691,7 +691,7 @@ def do_parse(parsefile, glxml):
 					csarglist = csargs(arglist)
 					csharp_funcimp.write(f'\t\t[DllImport("opengl32.dll", EntryPoint = "{funcn}")]\n')
 					csharp_funcimp.write(f'\t\tpublic static extern {csrettype} {funcn} ({csarglist});\n')
-			outs_cpp.write('\n'.join(static_const_aliases))
+			#outs_cpp.write('\n'.join(static_const_aliases))
 			outs_cpp.write('\n')
 		else:
 			l_class_name = _style_change(last_version)
