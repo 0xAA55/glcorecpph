@@ -888,7 +888,7 @@ def do_parse(parsefile, glxml):
 			arglist = funcproto['arglist']
 			functype = f'PFN{funcn.upper()}PROC'
 			membername = funcn[len(prefix):]
-			outs_hpp.write(f'\t\t{"static const " if last_version is None else ""}{functype} {membername};\n')
+			outs_hpp.write(f'\t\t{functype} {membername};\n')
 
 			func2load[membername] = funcn
 
