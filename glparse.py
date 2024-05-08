@@ -935,6 +935,7 @@ def do_parse(parsefile, glxml):
 			#outs_cpp.write(",\n".join([f"\t\t{membername}({funcname})" for membername, funcname in func2load.items()] + ['\t\tVer_Major(0)', '\t\tVer_Minor(0)', '\t\tVer_Release(0)']))
 			if len(func2load):
 				outs_cpp.write(",\n".join([f'\t\t{membername}(GetProc<PFN{funcname.upper()}PROC>("{funcname}", Null_{funcname}))' for membername, funcname in func2load.items()]))
+			outs_cpp.write(',\n')
 			outs_cpp.write(",\n".join(['\t\tVer_Major(0)', '\t\tVer_Minor(0)', '\t\tVer_Release(0)']))
 			outs_cpp.write('\n\t{\n')
 			outs_cpp.write('\t\tAvailable = true;\n')
