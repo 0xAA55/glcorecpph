@@ -905,7 +905,7 @@ def do_parse(parsefile, glxml):
 
 		for membername, ovld in overloads.items():
 			functype, rettype, ovlpre, arglist = ovld
-			outs_hpp.write(f'\t\tinline {rettype} {ovlpre}({arglist}) {"{"} ')
+			outs_hpp.write(f'\t\tinline {rettype} {ovlpre}({arglist}) const {"{"} ')
 			if rettype != 'void': outs_hpp.write('return ')
 			outs_hpp.write(f'{membername}({", ".join([pname.strip() for ptype, pname in [param.rsplit(" ", 1) for param in arglist.split(", ")]])});{"}"}\n')
 
