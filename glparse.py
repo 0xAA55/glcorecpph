@@ -1072,6 +1072,6 @@ def do_parse(parsefile, glxml):
 if __name__ == '__main__':
 	glxml = do_parse_glxml('gl.xml')
 	hpp, cpp, cs = do_parse('glcore.h', glxml)
-	with open(f'{modname}.hpp', 'w') as f: f.write(hpp)
-	with open(f'{modname}.cpp', 'w') as f: f.write(cpp)
+	with open(f'{modname}.hpp', 'wb') as f: f.write(hpp)
+	with open(f'{modname}.cpp', 'wb') as f: f.write(cpp)
 	with open(f'{modname}.cs', 'w') as f: f.write(cs)
