@@ -387,6 +387,9 @@ def do_parse(parsefile, glxml):
 	outs_hpp.write('\n')
 
 	outs_cpp.write(f'#include "{modname}.hpp"\n')
+	outs_cpp.write('\n')
+	outs_cpp.write('#include<cstring>\n')
+	outs_cpp.write('\n')
 	outs_cpp.write('#ifndef GLAPI\n')
 	outs_cpp.write('#  if defined(__MINGW32__) || defined(__CYGWIN__) || (_MSC_VER >= 800) || defined(_STDCALL_SUPPORTED) || defined(__BORLANDC__)\n')
 	outs_cpp.write('#    define GLAPI extern "C" __declspec(dllimport)\n')
