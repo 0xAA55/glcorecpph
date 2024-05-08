@@ -294,7 +294,7 @@ def do_parse(parsefile, glxml):
 		'4x2', '4x3'
 	], key=len, reverse=True)
 
-	cppfunc_cast = "static_cast"
+	cppfunc_cast = "reinterpret_cast"
 
 	csharp_typeconv = {
 		'int': 'int',
@@ -388,10 +388,10 @@ def do_parse(parsefile, glxml):
 
 	outs_cpp.write(f'#include "{modname}.hpp"\n')
 	outs_cpp.write('#ifndef GLAPI\n')
-	outs_cpp.write('#  if defined(__MINGW32__) || defined(__CYGWIN__)\n')
-	outs_cpp.write('#    define GLAPI extern "C"\n')
-	outs_cpp.write('#  else\n')
+	outs_cpp.write('#  if defined(__MINGW32__) || defined(__CYGWIN__) || (_MSC_VER >= 800) || defined(_STDCALL_SUPPORTED) || defined(__BORLANDC__)\n')
 	outs_cpp.write('#    define GLAPI extern "C" __declspec(dllimport)\n')
+	outs_cpp.write('#  else\n')
+	outs_cpp.write('#    define GLAPI extern "C"\n')
 	outs_cpp.write('#  endif\n')
 	outs_cpp.write('#endif\n')
 	outs_cpp.write('\n')
@@ -703,7 +703,7 @@ def do_parse(parsefile, glxml):
 				if rettype == 'void':
 					outs_cpp.write('{ NullFuncPtr(); }\n')
 				else:
-					outs_cpp.write('{ NullFuncPtr(); return NULL; }\n')
+					outs_cpp.write('{ NullFuncPtr(); return 0; }\n')
 
 		outs_hpp.write('\t{\n')
 		outs_hpp.write('\tprotected:\n')
@@ -827,12 +827,12 @@ def do_parse(parsefile, glxml):
 		outs_hpp.write('\tpublic:\n')
 		if last_version is None:
 			outs_hpp.write('\t\ttemplate<typename FuncType>\n')
-			outs_hpp.write('\t\tFuncType GetProc(const char* symbol)\n')
+			outs_hpp.write('\t\tFuncType GetProc(const char* symbol, FuncType DefaultBehaviorFunc)\n')
 			outs_hpp.write('\t\t{\n')
 			outs_hpp.write('\t\t\tvoid *ProcAddress = GetProcAddress(symbol);\n');
 			outs_hpp.write('\t\t\tif (!ProcAddress)\n')
 			outs_hpp.write('\t\t\t{\n')
-			outs_hpp.write('\t\t\t\tthrow NullFuncPtrException("OpenGL function pointer is null.\\n");\n')
+			outs_hpp.write('\t\t\t\treturn DefaultBehaviorFunc;\n')
 			outs_hpp.write('\t\t\t}\n')
 			outs_hpp.write(f'\t\t\treturn {cppfunc_cast}<FuncType>(ProcAddress);\n')
 			outs_hpp.write('\t\t}\n')
@@ -940,6 +940,7 @@ def do_parse(parsefile, glxml):
 			outs_cpp.write('\t\tif (Ver)\n')
 			outs_cpp.write('\t\t{\n')
 			outs_cpp.write('\t\t\tauto ch = Ver;\n')
+			outs_cpp.write('\t\t\tif (strstr(ch, "OpenGL ES")) ch += sizeof "OpenGL ES";\n')
 			outs_cpp.write('\t\t\tVer_Major = atoi(ch);\n')
 			outs_cpp.write('\t\t\twhile (isdigit(*ch)) ch++;\n')
 			outs_cpp.write("\t\t\tif (*ch == '.')\n")
@@ -992,23 +993,12 @@ def do_parse(parsefile, glxml):
 				major, minor, release = version_name.split('_')[1:] + ['0']
 			if len(func2load):
 				outs_cpp.write(',\n')
-				outs_cpp.write(",\n".join([f'\t\t{membername}(Null_{funcname})' for membername, funcname in func2load.items()]))
+				outs_cpp.write(",\n".join([f'\t\t{membername}(GetProc<PFN{funcname.upper()}PROC>("{funcname}", Null_{funcname}))' for membername, funcname in func2load.items()]))
 			outs_cpp.write('\n\t{\n')
 			if version_name.startswith('VERSION_'):
 				outs_cpp.write(f'\t\tAvailable = Ver_Major > {major} || (Ver_Major == {major} && (Ver_Minor > {minor} || (Ver_Minor == {minor} && Ver_Release >= {release})));\n')
 			else:
 				outs_cpp.write(f'\t\tAvailable = true;\n')
-			outs_cpp.write('\t\ttry\n')
-			outs_cpp.write('\t\t{\n')
-			for membername, funcname in func2load.items():
-				outs_cpp.write(f'\t\t\t{membername} = GetProc<PFN{funcname.upper()}PROC>("{funcname}");\n')
-			if 'SHADING_LANGUAGE_VERSION' in curver['define'].keys():
-				outs_cpp.write('\t\t\tShadingLanguageVersion = (const char*)GetString(SHADING_LANGUAGE_VERSION);\n')
-			outs_cpp.write('\t\t}\n')
-			outs_cpp.write('\t\tcatch (const NullFuncPtrException&)\n')
-			outs_cpp.write('\t\t{\n')
-			outs_cpp.write('\t\t\tAvailable = false;\n')
-			outs_cpp.write('\t\t}\n')
 			outs_cpp.write('\t}\n')
 
 			csharp_ctor.write(f'\t\t\tAvailable = Ver_Major > {major} || (Ver_Major == {major} && (Ver_Minor > {minor} || (Ver_Minor == {minor} && Ver_Release >= {release})));\n')
