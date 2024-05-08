@@ -698,15 +698,15 @@ def do_parse(parsefile, glxml):
 			outs_hpp.write(f'\tclass {class_name} : public {l_class_name}\n')
 			outs_csharp.write(f'\tclass {class_name} : {l_class_name}\n')
 			outs_csharp.write('\t{\n')
-			for funcn, funcproto in curver['funcproto'].items():
-				rettype = funcproto['ret']
-				calltype = funcproto['calltype']
-				arglist = funcproto['arglist']
-				outs_cpp.write(f'\tstatic {rettype} {calltype} Null_{funcn} ({arglist})')
-				if rettype == 'void':
-					outs_cpp.write('{ NullFuncPtr(); }\n')
-				else:
-					outs_cpp.write('{ NullFuncPtr(); return 0; }\n')
+		for funcn, funcproto in curver['funcproto'].items():
+			rettype = funcproto['ret']
+			calltype = funcproto['calltype']
+			arglist = funcproto['arglist']
+			outs_cpp.write(f'\tstatic {rettype} {calltype} Null_{funcn} ({arglist})')
+			if rettype == 'void':
+				outs_cpp.write('{ NullFuncPtr(); }\n')
+			else:
+				outs_cpp.write('{ NullFuncPtr(); return 0; }\n')
 
 		outs_hpp.write('\t{\n')
 		outs_hpp.write('\tprotected:\n')
