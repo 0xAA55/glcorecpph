@@ -9,6 +9,7 @@ PREFIX = prefix.upper()
 prefix_ = f'{prefix}_'
 PREFIX_ = f'{PREFIX}_'
 modname = 'glcore'
+rust_derive = '#[derive(Debug, Clone)]'
 
 def do_parse_glxml(glxmlfile):
 	group_data = {}
@@ -348,6 +349,13 @@ def do_parse(parsefile, glxml):
 	outs_hpp = io.StringIO()
 	outs_cpp = io.StringIO()
 	outs_csharp = io.StringIO()
+	outs_rs = {
+		'global': {
+			'predef': io.StringIO(),
+			'struct': io.StringIO(),
+			'impl': io.StringIO(),
+		}
+	}
 
 	outs_hpp.write('#pragma once\n')
 	outs_hpp.write('\n')
@@ -423,6 +431,129 @@ def do_parse(parsefile, glxml):
 	outs_csharp.write('\t\tpublic NullOpenGLFunctionPointerException(string message, Exception inner) : base(message, inner) {}\n')
 	outs_csharp.write('\t}\n')
 	outs_csharp.write('\tpublic delegate IntPtr Delegate_GetProcAddress (string ProcName);\n')
+
+	outs_rs['global']['predef'].write("use std::ffi::{c_void, CStr};\n")
+	outs_rs['global']['predef'].write('type khronos_float_t = f32;\n')
+	outs_rs['global']['predef'].write('type khronos_ssize_t = usize;\n')
+	outs_rs['global']['predef'].write('type khronos_intptr_t = usize;\n')
+	outs_rs['global']['predef'].write('type khronos_int16_t = i16;\n')
+	outs_rs['global']['predef'].write('type khronos_int8_t = i8;\n')
+	outs_rs['global']['predef'].write('type khronos_uint16_t = u16;\n')
+	outs_rs['global']['predef'].write('type khronos_int64_t = i64;\n')
+	outs_rs['global']['predef'].write('type khronos_uint64_t = u64;\n')
+
+	def rs_type_conv(cpptype):
+		try:
+			return {
+				'void': 'c_void',
+				'c_void': 'c_void',
+				'int8_t' : 'i8',
+				'int16_t': 'i16',
+				'int32_t': 'i32',
+				'int64_t': 'i64',
+				'uint8_t' : 'u8',
+				'uint16_t': 'u16',
+				'uint32_t': 'u32',
+				'uint64_t': 'u64',
+				'int': 'i32',
+				'short': 'i16',
+				'char': 'i8',
+				'unsigned': 'u32',
+				'unsigned int': 'u32',
+				'unsigned short': 'u16',
+				'unsigned char': 'u8',
+				'float': 'f32',
+				'double': 'f64',
+				'*mut __GLsync': '*mut c_void',
+			}[cpptype]
+		except KeyError as e:
+			print(f'Unknown cpp type for rust: {e}')
+			return cpptype
+
+	def rs_keyword_rename(ident):
+		keywords = {"type"}
+		if ident in keywords:
+			ident += '_'
+		return ident;
+
+	def rs_argtype_conv(argt):
+		ret = ''
+		is_const = False
+		if argt.startswith('const '):
+			is_const = True
+			argt = argt[6:]
+		tokens = [arg.strip() for arg in argt.split('*')]
+		while len(tokens) > 1:
+			last = tokens[-1]
+			if last == '':
+				if is_const:
+					ret += '*const '
+					is_const = False
+				else:
+					ret += '*mut '
+			elif last == 'const':
+				ret += '*const '
+			else:
+				ret += '*const '
+				print(f"Unknown pointer modifier '{last}'")
+			tokens.pop()
+		argt = tokens[0]
+		if argt.startswith('struct '):
+			argt = argt[7:]
+		if argt == "void":
+			argt = "c_void"
+		ret += argt
+		return ret
+
+	def rs_arg(args, fp = False, emit_argn = False, with_self = True):
+		retarg = []
+		if with_self: retarg += ['&self']
+		for arg in args.split(','):
+			try:
+				argt, argn = arg.strip().rsplit(' ', 1)
+				argn = rs_keyword_rename(argn)
+				ret = rs_argtype_conv(argt)
+				if fp:
+					if not emit_argn:
+						ret = f'/* {argn} */ ' + ret
+				else:
+					if emit_argn:
+						ret = f'_: {ret}'
+					else:
+						ret = f'{argn}: {ret}'
+				retarg += [ret]
+			except ValueError:
+				if arg == 'void':
+					pass
+				else:
+					retarg += arg
+		retarg = ', '.join(retarg)
+		return retarg
+
+	def rs_arg_fp(args):
+		return rs_arg(args, fp = True, emit_argn = True, with_self = False)
+
+	def rs_call_arg(args):
+		retarg = []
+		for arg in args.split(','):
+			try:
+				argt, argn = arg.strip().rsplit(' ', 1)
+				argn = rs_keyword_rename(argn)
+				retarg += [argn]
+			except ValueError:
+				if arg == 'void':
+					retarg += ['']
+				else:
+					retarg += arg
+		retarg = ', '.join(retarg)
+		return retarg
+
+	def rs_ret(rettype):
+		ret = rs_argtype_conv(rettype)
+		if ret in {'void', 'c_void'}:
+			return '';
+		else:
+			return f' -> {ret}'
 
 	def _overload_check(membername) -> tuple:
 		preserve = ''
@@ -510,15 +641,33 @@ def do_parse(parsefile, glxml):
 		versions[version_name]['type2proto'][f'PFN{funcname.upper()}PROC'] = funcname
 
 	def _on_version_end(x):
-		nonlocal firstver_name, last_version, parsed, outs_hpp, outs_cpp, outs_csharp, csharp_typeconv
+		nonlocal firstver_name, last_version, parsed, outs_hpp, outs_cpp, outs_csharp, outs_rs, csharp_typeconv
 		curver = versions[version_name]
+		class_name = _style_change(version_name)
 		func2load = {} # functions to be loaded
 		overloads = {} # key: 'Xxxxx[1,2,3,4][N,I,P,L][s,f,i,d,ub,us,ui]'; value = (rettype, 'Xxxxx', arglist)
 		type2proto = curver['type2proto']
 		proto2type = {v: k for k, v in type2proto.items()}
 
+		outs_rs[class_name] = {
+			'predef': io.StringIO(),
+			'struct': io.StringIO(),
+			'impl': io.StringIO(),
+		}
+
+		outs_rs[class_name]['struct'].write(f'{rust_derive}\n')
+		outs_rs[class_name]['struct'].write(f'pub struct {class_name} {"{"}\n')
+		outs_rs[class_name]['impl'].write(f'impl {class_name} {"{"}\n')
+
 		for target_type, typealias in curver['typealias'].items():
 			outs_hpp.write(f'\ttypedef {target_type} {", ".join(typealias)};\n')
+
+			for alias in typealias:
+				while alias[0] == '*':
+					alias = alias[1:]
+					target_type = target_type + "*"
+				rs_target_type = rs_argtype_conv(target_type)
+				outs_rs[class_name]['predef'].write(f'type {alias} = {rs_type_conv(rs_target_type)};\n')
 			try:
 				target_of_target = csharp_typeconv[target_type]
 			except KeyError:
@@ -639,10 +788,10 @@ def do_parse(parsefile, glxml):
 			calltype = fpdata['calltype']
 			arglist = fpdata['arglist']
 			outs_hpp.write(f'\tusing {functype} = {rettype} ({calltype}) ({arglist});\n')
+			outs_rs[class_name]['predef'].write(f'type {functype} = extern "system" fn({rs_arg_fp(arglist)}){rs_ret(rettype)};')
 			csharp_delecb.write(f'\t\tpublic delegate {csret(rettype)} {functype} ({csargs(arglist)});\n')
 		outs_hpp.write('\n')
 
-		class_name = _style_change(version_name)
 		l_class_name = None
 		if last_version is None:
 			firstver_name = class_name
@@ -655,8 +804,9 @@ def do_parse(parsefile, glxml):
 				calltype = funcproto['calltype']
 				arglist = funcproto['arglist']
 				membername = funcn[len(prefix):]
-				outs_cpp.write(f'\tGLAPI {rettype} {calltype} {funcn} ({arglist});\n')
 				#static_const_aliases += [f'\tconst {class_name}::PFN{funcn.upper()}PROC {class_name}::{membername} = {funcn};']
+
+				outs_cpp.write(f'\tGLAPI {rettype} {calltype} {funcn} ({arglist});\n')
 
 				csrettype = csret(rettype)
 				if '*' in arglist:
@@ -702,11 +852,40 @@ def do_parse(parsefile, glxml):
 			rettype = funcproto['ret']
 			calltype = funcproto['calltype']
 			arglist = funcproto['arglist']
+			membername = funcn[len(prefix):]
 			outs_cpp.write(f'\tstatic {rettype} {calltype} Null_{funcn} ({arglist})')
+			outs_rs[class_name]['impl'].write("\t#[inline(always)]\n")
+			outs_rs[class_name]['impl'].write(f"\tpub fn {funcn}({rs_arg(arglist)}){rs_ret(rettype)} {'{'}\n")
+			outs_rs[class_name]['impl'].write(f'\t\t(self.{membername.lower()})({rs_call_arg(arglist)})\n')
+			outs_rs[class_name]['impl'].write('\t}\n')
 			if rettype == 'void':
 				outs_cpp.write('{ NullFuncPtr(); }\n')
 			else:
 				outs_cpp.write('{ NullFuncPtr(); return 0; }\n')
+		outs_rs[class_name]['impl'].write("\tpub fn new(get_proc_address: Fn(&'static str) -> *const c_void) -> Self {\n")
+		if last_version is None:
+			outs_rs[class_name]['impl'].write("\t\tlet mut ret = Self {\n")
+			outs_rs[class_name]['impl'].write("\t\t\tmajor_version = 0,\n")
+			outs_rs[class_name]['impl'].write("\t\t\tminor_version = 0,\n")
+			outs_rs[class_name]['impl'].write("\t\t\trelease_version = 0,\n")
+			outs_rs[class_name]['impl'].write('\t\t\tvendor = "unknown",\n')
+			outs_rs[class_name]['impl'].write('\t\t\trenderer = "unknown",\n')
+			outs_rs[class_name]['impl'].write('\t\t\tversion = "unknown",\n')
+		else:
+			l_class_name = _style_change(last_version)
+			outs_rs[class_name]['impl'].write("\t\tSelf {\n")
+			outs_rs[class_name]['impl'].write(f"\t\t\t{l_class_name.lower()}: {l_class_name}::new(&get_proc_address),\n")
+			outs_rs[class_name]['struct'].write(f"\t{l_class_name.lower()}: {l_class_name},\n")
+		for funcn, funcproto in curver['funcproto'].items():
+			membername = funcn[len(prefix):]
+			outs_rs[class_name]['impl'].write(f'\t\t\t{membername.lower()}: get_proc_address("{funcn}") as PFN{funcn.upper()}PROC,\n')
+		if last_version is None:
+			outs_rs[class_name]['impl'].write('\t\t};\n')
+			outs_rs[class_name]['impl'].write('\t\tret.fetch_version();\n')
+			outs_rs[class_name]['impl'].write('\t\tret\n')
+		else:
+			outs_rs[class_name]['impl'].write('\t\t}\n')
+		outs_rs[class_name]['impl'].write('\t}\n')
 
 		outs_hpp.write('\t{\n')
 		outs_hpp.write('\tprotected:\n')
@@ -718,6 +897,7 @@ def do_parse(parsefile, glxml):
 			pproto = type2proto[functype]
 			proto = pproto[len(prefix):]
 			outs_hpp.write(f'\t\tusing {functype} = {rettype} ({calltype}) ({arglist});\n')
+			outs_rs[class_name]['predef'].write(f'type {functype} = extern "system" fn({rs_arg_fp(arglist)}){rs_ret(rettype)};\n')
 			args = [arg.strip() for arg in arglist.split(',')]
 			#if proto.startswith('Gen') and proto.endswith('s') and len(args) == 2 and args[0].endswith((' n', ' count')) and args[1].count('*') == 1 and 'const' not in args[1] and rettype == 'void':
 			if '*' in arglist:
@@ -820,14 +1000,31 @@ def do_parse(parsefile, glxml):
 			csharp_utilities.write('\t\t\tif (FuncPtr == IntPtr.Zero) throw new NullOpenGLFunctionPointerException(String.Format("Could not get OpenGL function `{0}`.", ProcName));\n')
 			csharp_utilities.write('\t\t\treturn Marshal.GetDelegateForFunctionPointer<TDelegate>(FuncPtr);\n')
 			csharp_utilities.write('\t\t}\n')
+			outs_rs[class_name]['struct'].write('\tmajor_version: i32,\n')
+			outs_rs[class_name]['struct'].write('\tminor_version: i32,\n')
+			outs_rs[class_name]['struct'].write('\trelease_version: i32,\n')
+			outs_rs[class_name]['struct'].write("\tvendor: &'static str,\n")
+			outs_rs[class_name]['struct'].write("\trenderer: &'static str,\n")
+			outs_rs[class_name]['struct'].write("\tversion: &'static str,\n")
+			outs_rs[class_name]['impl'].write("\tfn fetch_version(&mut self) -> {\n")
+			outs_rs[class_name]['impl'].write('\t\tself.vendor = unsafe{CStr::from_ptr(self.glGetString(Self::VENDOR) as *const i8)}.to_str().unwrap();\n')
+			outs_rs[class_name]['impl'].write('\t\tself.renderer = unsafe{CStr::from_ptr(self.glGetString(Self::RENDERER) as *const i8)}.to_str().unwrap();\n')
+			outs_rs[class_name]['impl'].write('\t\tself.version = unsafe{CStr::from_ptr(self.glGetString(Self::VERSION) as *const i8)}.to_str().unwrap();\n')
+			outs_rs[class_name]['impl'].write('\t}\n')
 		elif 'SHADING_LANGUAGE_VERSION' in curver['define'].keys():
 			outs_hpp.write('\t\tstd::string ShadingLanguageVersion;\n')
+			outs_rs[class_name]['struct'].write("\tshading_language_version: &'static str,\n")
 			csharp_utilities.write('\t\tpublic readonly string ShadingLanguageVersion;\n')
 		outs_hpp.write('\n')
 		outs_hpp.write('\tprivate:\n')
 		outs_hpp.write('\t\tbool Available;\n')
 		outs_hpp.write('\n')
 		outs_hpp.write('\tpublic:\n')
+		outs_rs[class_name]['struct'].write("\tavailable: bool,\n")
+		outs_rs[class_name]['impl'].write("\t#[inline(always)]\n")
+		outs_rs[class_name]['impl'].write("\tpub fn get_available(&self) -> {\n")
+		outs_rs[class_name]['impl'].write(f'\t\tself.available\n')
+		outs_rs[class_name]['impl'].write('\t}\n')
 		if last_version is None:
 			outs_hpp.write('\t\ttemplate<typename FuncType>\n')
 			outs_hpp.write('\t\tFuncType GetProc(const char* symbol, FuncType DefaultBehaviorFunc)\n')
@@ -850,6 +1047,10 @@ def do_parse(parsefile, glxml):
 			outs_hpp.write('\t\tinline std::string GetVersion() { return Version; }\n')
 		elif 'SHADING_LANGUAGE_VERSION' in curver['define'].keys():
 			outs_hpp.write('\t\tinline std::string GetShadingLanguageVersion() { return ShadingLanguageVersion; }\n')
+			outs_rs[class_name]['impl'].write("\t#[inline(always)]\n")
+			outs_rs[class_name]['impl'].write("\tpub fn get_shading_language_version(&self) -> &'static str {\n")
+			outs_rs[class_name]['impl'].write("\t\tself.shading_language_version\n")
+			outs_rs[class_name]['impl'].write("\t}\n")
 
 		csharp_utilities.write('\t\tprivate readonly bool Available;\n')
 
@@ -873,6 +1074,7 @@ def do_parse(parsefile, glxml):
 			else:
 				deft = enumtype[f'{PREFIX_}{defn}']
 			outs_hpp.write(f'\t\tstatic constexpr {deft} {defn} = {defv};\n')
+			outs_rs[class_name]['impl'].write(f"\tpub const {defn}: {deft} = {defv};\n")
 			if deft == 'GLuint64':
 				csdefv = defv.replace('ull', 'ul')
 			elif deft == 'GLint64':
@@ -889,6 +1091,7 @@ def do_parse(parsefile, glxml):
 			functype = f'PFN{funcn.upper()}PROC'
 			membername = funcn[len(prefix):]
 			outs_hpp.write(f'\t\t{functype} {membername};\n')
+			outs_rs[class_name]['struct'].write(f"\t{membername.lower()}: {functype},\n")
 
 			func2load[membername] = funcn
 
@@ -920,6 +1123,7 @@ def do_parse(parsefile, glxml):
 				csharp_overloads.write(f'{membername}({cscallarg(csarglist)}); {"}"}\n')
 
 		outs_hpp.write('\t};\n')
+		outs_rs[class_name]['struct'].write("}\n")
 
 		if last_version:
 			csharp_ctor.write(f'\t\tpublic {class_name}(Delegate_GetProcAddress GetProcAddress) : base(GetProcAddress)\n')
@@ -1028,6 +1232,7 @@ def do_parse(parsefile, glxml):
 		csharp_ctor.write('\t\t}\n')
 
 		outs_cpp.write('\n')
+		outs_rs[class_name]['impl'].write("}\n")
 
 		def mergeinto(desc, data):
 			nonlocal outs_csharp
@@ -1069,12 +1274,14 @@ def do_parse(parsefile, glxml):
 	outs_hpp.write('};\n')
 	outs_cpp.write('};\n')
 	outs_csharp.write('};\n')
+	outs_rs = '\n'.join(['\n'.join([ver['predef'].getvalue(), ver['struct'].getvalue(), ver['impl'].getvalue()]) for (key, ver) in outs_rs.items()])
 
-	return outs_hpp.getvalue(), outs_cpp.getvalue(), outs_csharp.getvalue()
+	return outs_hpp.getvalue(), outs_cpp.getvalue(), outs_csharp.getvalue(), outs_rs.replace('\n\n\n', '\n')
 
 if __name__ == '__main__':
 	glxml = do_parse_glxml('gl.xml')
-	hpp, cpp, cs = do_parse('glcore.h', glxml)
+	hpp, cpp, cs, rs = do_parse('glcore.h', glxml)
 	with open(f'{modname}.hpp', 'wb') as f: f.write(hpp.encode('utf-8'))
 	with open(f'{modname}.cpp', 'wb') as f: f.write(cpp.encode('utf-8'))
 	with open(f'{modname}.cs', 'w') as f: f.write(cs)
+	with open(f'{modname}.rs', 'w') as f: f.write(rs)
