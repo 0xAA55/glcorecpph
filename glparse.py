@@ -1303,7 +1303,7 @@ def do_parse(parsefile, glxml):
 	outs_hpp.write('};\n')
 	outs_cpp.write('};\n')
 	outs_csharp.write('};\n')
-	outs_rs = '\n'.join(['\n'.join([ver['predef'].getvalue(), ver['struct'].getvalue(), ver['impl'].getvalue()]) for (key, ver) in outs_rs.items()])
+	outs_rs = '\n'.join(['\n'.join([ver['predef'].getvalue(), ver['trait'].getvalue(), ver['struct'].getvalue(), ver['impl'].getvalue()]) for (key, ver) in outs_rs.items()])
 
 	return outs_hpp.getvalue(), outs_cpp.getvalue(), outs_csharp.getvalue(), outs_rs.replace('\n\n\n', '\n')
 
