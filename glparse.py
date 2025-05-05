@@ -882,7 +882,7 @@ def do_parse(parsefile, glxml):
 				outs_cpp.write('{ NullFuncPtr(); }\n')
 			else:
 				outs_cpp.write('{ NullFuncPtr(); return 0; }\n')
-		outs_rs[class_name]['impl'].write("}\n")
+		outs_rs[class_name]['impl'].write("}\n\n")
 		outs_rs[class_name]['impl'].write(f"impl {class_name} {'{'}\n")
 		outs_rs[class_name]['impl'].write("\tpub fn new(get_proc_address: impl Fn(&'static str) -> *const c_void) -> Self {\n")
 		if last_version is None:
@@ -1260,8 +1260,34 @@ def do_parse(parsefile, glxml):
 		csharp_ctor.write('\t\t}\n')
 
 		outs_cpp.write('\n')
-		outs_rs[class_name]['impl'].write("}\n")
+		outs_rs[class_name]['impl'].write("}\n\n")
 		outs_rs[class_name]['trait'].write("}\n")
+
+		outs_rs[class_name]['impl'].write(f"impl Default for {class_name} {'{'}\n")
+		outs_rs[class_name]['impl'].write("\tfn default() -> Self {\n")
+
+		if last_version is None:
+			outs_rs[class_name]['impl'].write("\t\tSelf {\n")
+			outs_rs[class_name]['impl'].write("\t\t\tavailable: false,\n")
+			outs_rs[class_name]['impl'].write("\t\t\tmajor_version: 0,\n")
+			outs_rs[class_name]['impl'].write("\t\t\tminor_version: 0,\n")
+			outs_rs[class_name]['impl'].write("\t\t\trelease_version: 0,\n")
+			outs_rs[class_name]['impl'].write('\t\t\tvendor: "unknown",\n')
+			outs_rs[class_name]['impl'].write('\t\t\trenderer: "unknown",\n')
+			outs_rs[class_name]['impl'].write('\t\t\tversion: "unknown",\n')
+		else:
+			l_class_name = _style_change(last_version)
+			outs_rs[class_name]['impl'].write("\t\tSelf {\n")
+			outs_rs[class_name]['impl'].write("\t\t\tavailable: false,\n")
+		for funcn, funcproto in curver['funcproto'].items():
+			membername = funcn[len(prefix):]
+			outs_rs[class_name]['impl'].write(f'\t\t\t{membername.lower()}: null,\n')
+		if 'SHADING_LANGUAGE_VERSION' in curver['define'].keys():
+			outs_rs[class_name]['impl'].write('\t\tshading_language_version: "unknown",\n')
+
+		outs_rs[class_name]['impl'].write('\t\t}\n')
+		outs_rs[class_name]['impl'].write('\t}\n')
+		outs_rs[class_name]['impl'].write("}\n\n")
 
 		def mergeinto(desc, data):
 			nonlocal outs_csharp
