@@ -897,8 +897,7 @@ def do_parse(parsefile, glxml):
 		else:
 			l_class_name = _style_change(last_version)
 			outs_rs[class_name]['impl'].write("\t\tSelf {\n")
-			outs_rs[class_name]['impl'].write(f"\t\t\t{l_class_name.lower()}: {l_class_name}::new(&get_proc_address),\n")
-			outs_rs[class_name]['struct'].write(f"\t{l_class_name.lower()}: {l_class_name},\n")
+			outs_rs[class_name]['impl'].write("\t\t\tavailable: false,\n")
 		for funcn, funcproto in curver['funcproto'].items():
 			membername = funcn[len(prefix):]
 			outs_rs[class_name]['impl'].write(f'\t\t\t{membername.lower()}: get_proc_address("{funcn}") as PFN{funcn.upper()}PROC,\n')
