@@ -948,6 +948,7 @@ def do_parse(parsefile, glxml):
 			outs_rs['global']['impl'].write(f"\t\tself.{version_name.lower()}.shading_language_version\n")
 			outs_rs['global']['impl'].write("\t}\n")
 		outs_rs[class_name]['impl'].write("}\n\n")
+		outs_rs['global']['impl'].write('}\n\n')
 		outs_rs[class_name]['impl'].write(f"impl {class_name} {'{'}\n")
 		outs_rs[class_name]['impl'].write("\tpub fn new(get_proc_address: impl Fn(&'static str) -> *const c_void) -> Self {\n")
 		if last_version is None:
