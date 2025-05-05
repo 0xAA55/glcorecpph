@@ -950,8 +950,8 @@ def do_parse(parsefile, glxml):
 		outs_rs[class_name]['impl'].write("}\n\n")
 		outs_rs['global']['impl'].write('}\n\n')
 		outs_rs[class_name]['impl'].write(f"impl {class_name} {'{'}\n")
-		outs_rs[class_name]['impl'].write("\tpub fn new(get_proc_address: impl Fn(&'static str) -> *const c_void) -> Self {\n")
 		if last_version is None:
+			outs_rs[class_name]['impl'].write("\tpub fn new(get_proc_address: &impl Fn(&'static str) -> *const c_void) -> Self {\n")
 			outs_rs[class_name]['impl'].write("\t\tlet mut ret = Self {\n")
 			outs_rs[class_name]['impl'].write("\t\t\tavailable: false,\n")
 			outs_rs[class_name]['impl'].write("\t\t\tmajor_version: 0,\n")
@@ -962,6 +962,7 @@ def do_parse(parsefile, glxml):
 			outs_rs[class_name]['impl'].write('\t\t\tversion: "unknown",\n')
 		else:
 			l_class_name = _style_change(last_version)
+			outs_rs[class_name]['impl'].write(f"\tpub fn new(base: impl {rs_first_trait_name}, get_proc_address: &impl Fn(&'static str) -> *const c_void) -> Self {'{'}\n")
 			outs_rs[class_name]['impl'].write("\t\tSelf {\n")
 			outs_rs[class_name]['impl'].write("\t\t\tavailable: false,\n")
 		for funcn, funcproto in curver['funcproto'].items():
