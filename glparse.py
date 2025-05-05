@@ -1362,7 +1362,7 @@ def do_parse(parsefile, glxml):
 			outs_rs[class_name]['impl'].write("\t\t\tavailable: false,\n")
 		for funcn, funcproto in curver['funcproto'].items():
 			membername = funcn[len(prefix):]
-			outs_rs[class_name]['impl'].write(f'\t\t\t{membername.lower()}: null,\n')
+			outs_rs[class_name]['impl'].write(f'\t\t\t{membername.lower()}: null(),\n')
 		if 'SHADING_LANGUAGE_VERSION' in curver['define'].keys():
 			outs_rs[class_name]['impl'].write('\t\t\tshading_language_version: "unknown",\n')
 
