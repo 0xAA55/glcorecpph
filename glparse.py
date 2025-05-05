@@ -996,7 +996,7 @@ def do_parse(parsefile, glxml):
 			outs_rs[class_name]['impl'].write('\t\tret\n')
 		else:
 			if 'SHADING_LANGUAGE_VERSION' in curver['define'].keys():
-				outs_rs[class_name]['impl'].write('\t\t\tshading_language_version: unsafe{CStr::from_ptr(base.glGetString(SHADING_LANGUAGE_VERSION) as *const i8)}.to_str().unwrap(),\n')
+				outs_rs[class_name]['impl'].write('\t\t\tshading_language_version: base.glGetString(GL_SHADING_LANGUAGE_VERSION),\n')
 			outs_rs[class_name]['impl'].write('\t\t}\n')
 		outs_rs[class_name]['impl'].write('\t}\n')
 
@@ -1122,9 +1122,9 @@ def do_parse(parsefile, glxml):
 			outs_rs[class_name]['struct'].write("\tversion: &'static str,\n")
 			outs_rs[class_name]['impl'].write("\t#[inline(always)]\n")
 			outs_rs[class_name]['impl'].write("\tfn fetch_version(&mut self) {\n")
-			outs_rs[class_name]['impl'].write('\t\tself.vendor = unsafe{CStr::from_ptr(self.glGetString(VENDOR) as *const i8)}.to_str().unwrap();\n')
-			outs_rs[class_name]['impl'].write('\t\tself.renderer = unsafe{CStr::from_ptr(self.glGetString(RENDERER) as *const i8)}.to_str().unwrap();\n')
-			outs_rs[class_name]['impl'].write('\t\tself.version = unsafe{CStr::from_ptr(self.glGetString(VERSION) as *const i8)}.to_str().unwrap();\n')
+			outs_rs[class_name]['impl'].write('\t\tself.vendor = self.glGetString(GL_VENDOR);\n')
+			outs_rs[class_name]['impl'].write('\t\tself.renderer = self.glGetString(GL_RENDERER);\n')
+			outs_rs[class_name]['impl'].write('\t\tself.version = self.glGetString(GL_VERSION);\n')
 			outs_rs[class_name]['impl'].write('\t\tself.spec = "OpenGL";\n')
 			outs_rs[class_name]['impl'].write('\t\tlet mut verstr = self.version;\n')
 			outs_rs[class_name]['impl'].write("\t\tif let Some((left, right)) = verstr.rsplit_once(' ') {\n")
