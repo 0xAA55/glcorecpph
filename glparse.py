@@ -1233,6 +1233,8 @@ def do_parse(parsefile, glxml):
 			outs_cpp.write('\n\t{\n')
 			if version_name.startswith('VERSION_'):
 				outs_cpp.write(f'\t\tAvailable = Ver_Major > {major} || (Ver_Major == {major} && (Ver_Minor > {minor} || (Ver_Minor == {minor} && Ver_Release >= {release})));\n')
+				if 'SHADING_LANGUAGE_VERSION' in curver['define'].keys():
+					outs_cpp.write(f'\t\tShadingLanguageVersion = GetString(SHADING_LANGUAGE_VERSION);')
 			else:
 				outs_cpp.write(f'\t\tAvailable = true;\n')
 			outs_cpp.write('\t}\n')
