@@ -1047,7 +1047,7 @@ def do_parse(parsefile, glxml):
 		outs_hpp.write('\tpublic:\n')
 		outs_rs[class_name]['struct'].write("\tavailable: bool,\n")
 		outs_rs[class_name]['impl'].write("\t#[inline(always)]\n")
-		outs_rs[class_name]['impl'].write("\tpub fn get_available(&self) -> {\n")
+		outs_rs[class_name]['impl'].write("\tpub fn get_available(&self) -> bool {\n")
 		outs_rs[class_name]['impl'].write(f'\t\tself.available\n')
 		outs_rs[class_name]['impl'].write('\t}\n')
 		if last_version is None:
