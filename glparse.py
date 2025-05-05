@@ -471,7 +471,11 @@ def do_parse(parsefile, glxml):
 			return cpptype
 
 	def rs_keyword_rename(ident):
-		keywords = {"type"}
+		keywords = {
+			"type",
+			"ref",
+			"string",
+		}
 		if ident in keywords:
 			ident += '_'
 		return ident;
