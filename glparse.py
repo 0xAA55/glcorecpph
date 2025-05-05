@@ -954,7 +954,7 @@ def do_parse(parsefile, glxml):
 		outs_rs['global']['impl'].write('}\n\n')
 		outs_rs[class_name]['impl'].write(f"impl {class_name} {'{'}\n")
 		if last_version is None:
-			outs_rs[class_name]['impl'].write("\tpub fn new(get_proc_address: &impl Fn(&'static str) -> *const c_void) -> Self {\n")
+			outs_rs[class_name]['impl'].write("\tpub fn new(mut get_proc_address: impl FnMut(&'static str) -> *const c_void) -> Self {\n")
 			outs_rs[class_name]['impl'].write("\t\tlet mut ret = Self {\n")
 			outs_rs[class_name]['impl'].write("\t\t\tavailable: true,\n")
 			outs_rs[class_name]['impl'].write('\t\t\tspec: "unknown",\n')
@@ -970,7 +970,7 @@ def do_parse(parsefile, glxml):
 			outs_rs[class_name]['trait'].write("\tfn get_versionstr(&self) -> &'static str;\n")
 		else:
 			l_class_name = _style_change(last_version)
-			outs_rs[class_name]['impl'].write(f"\tpub fn new(base: impl {rs_first_trait_name}, get_proc_address: &impl Fn(&'static str) -> *const c_void) -> Self {'{'}\n")
+			outs_rs[class_name]['impl'].write(f"\tpub fn new(base: impl {rs_first_trait_name}, mut get_proc_address: impl FnMut(&'static str) -> *const c_void) -> Self {'{'}\n")
 			outs_rs[class_name]['impl'].write("\t\tlet (_spec, major, minor, release) = base.get_version();\n")
 			outs_rs[class_name]['impl'].write("\t\tlet bigver = major.clamp(0, 100) * 10000 + minor.clamp(0, 99) * 100 + release.clamp(0, 99);\n")
 			outs_rs[class_name]['impl'].write(f"\t\tif bigver < {int(major) * 10000 + int(minor) * 100 + int(release)} {'{'}\n")
@@ -1427,8 +1427,8 @@ def do_parse(parsefile, glxml):
 	first_member_name = rs_global_members[0][0]
 
 	outs_rs['global']['impl'].write(f'impl {rs_global_struct_name} {"{"}\n')
-	outs_rs['global']['impl'].write("\tpub fn new(get_proc_address: &impl Fn(&'static str) -> *const c_void) -> Self {\n")
-	outs_rs['global']['impl'].write(f'\t\tlet {first_member_name} = {firstver_classname}::new(get_proc_address);\n')
+	outs_rs['global']['impl'].write("\tpub fn new(mut get_proc_address: impl FnMut(&'static str) -> *const c_void) -> Self {\n")
+	outs_rs['global']['impl'].write(f'\t\tlet {first_member_name} = {firstver_classname}::new(&mut get_proc_address);\n')
 	outs_rs['global']['impl'].write(f'\t\tif !{first_member_name}.available {"{"}\n')
 	outs_rs['global']['impl'].write(f'\t\t\treturn Self::default();\n')
 	outs_rs['global']['impl'].write('\t\t}\n')
@@ -1436,7 +1436,7 @@ def do_parse(parsefile, glxml):
 	outs_rs['global']['impl'].write(f'\t\t\t{first_member_name},\n')
 	for i in range(1, len(rs_global_members)):
 		name, type = rs_global_members[i]
-		outs_rs['global']['impl'].write(f'\t\t\t{name}: {type}::new({first_member_name}, get_proc_address),\n')
+		outs_rs['global']['impl'].write(f'\t\t\t{name}: {type}::new({first_member_name}, &mut get_proc_address),\n')
 	outs_rs['global']['impl'].write('\t\t}\n')
 	outs_rs['global']['impl'].write('\t}\n')
 	outs_rs['global']['impl'].write('}\n\n')
