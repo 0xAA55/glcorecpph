@@ -667,6 +667,10 @@ def do_parse(parsefile, glxml):
 		overloads = {} # key: 'Xxxxx[1,2,3,4][N,I,P,L][s,f,i,d,ub,us,ui]'; value = (rettype, 'Xxxxx', arglist)
 		type2proto = curver['type2proto']
 		proto2type = {v: k for k, v in type2proto.items()}
+		try:
+			major, minor, release = version_name.split('_')[1:]
+		except ValueError:
+			major, minor, release = version_name.split('_')[1:] + ['0']
 
 		outs_rs[class_name] = {
 			'predef': io.StringIO(),
@@ -1228,10 +1232,6 @@ def do_parse(parsefile, glxml):
 			csharp_ctor.write('\t\t\t\tVer_Release = Convert.ToInt32(VersionSplit[2]);\n')
 			csharp_ctor.write('\t\t\t}\n')
 		else:
-			try:
-				major, minor, release = version_name.split('_')[1:]
-			except ValueError:
-				major, minor, release = version_name.split('_')[1:] + ['0']
 			if len(func2load):
 				outs_cpp.write(',\n')
 				outs_cpp.write(",\n".join([f'\t\t{membername}(GetProc<PFN{funcname.upper()}PROC>("{funcname}", Null_{funcname}))' for membername, funcname in func2load.items()]))
