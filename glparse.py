@@ -953,7 +953,8 @@ def do_parse(parsefile, glxml):
 		if last_version is None:
 			outs_rs[class_name]['impl'].write("\tpub fn new(get_proc_address: &impl Fn(&'static str) -> *const c_void) -> Self {\n")
 			outs_rs[class_name]['impl'].write("\t\tlet mut ret = Self {\n")
-			outs_rs[class_name]['impl'].write("\t\t\tavailable: false,\n")
+			outs_rs[class_name]['impl'].write("\t\t\tavailable: true,\n")
+			outs_rs[class_name]['impl'].write('\t\t\tspec: "unknown",\n')
 			outs_rs[class_name]['impl'].write("\t\t\tmajor_version: 0,\n")
 			outs_rs[class_name]['impl'].write("\t\t\tminor_version: 0,\n")
 			outs_rs[class_name]['impl'].write("\t\t\trelease_version: 0,\n")
