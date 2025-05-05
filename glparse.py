@@ -659,7 +659,7 @@ def do_parse(parsefile, glxml):
 		versions[version_name]['type2proto'][f'PFN{funcname.upper()}PROC'] = funcname
 
 	def _on_version_end(x):
-		nonlocal firstver_name, last_version, parsed, outs_hpp, outs_cpp, outs_csharp, outs_rs, csharp_typeconv
+		nonlocal firstver_name, firstver_classname, last_version, parsed, outs_hpp, outs_cpp, outs_csharp, outs_rs, csharp_typeconv, rs_traits
 		curver = versions[version_name]
 		class_name = _style_change(version_name)
 		rs_trait_name = version_name.replace('VERSION', 'GL')
