@@ -894,9 +894,7 @@ def do_parse(parsefile, glxml):
 			outs_rs[class_name]['impl'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret(rettype)} {'{'}\n")
 			outs_rs[class_name]['impl'].write(f'\t\t(self.{membername.lower()})({rs_call_arg(arglist)})\n')
 			outs_rs[class_name]['impl'].write('\t}\n')
-			outs_rs[class_name]['trait'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret(rettype)} {'{'}\n")
-			outs_rs[class_name]['trait'].write(f'\t\tpanic!("OpenGL function pointer of `{funcn}` is NULL");\n')
-			outs_rs[class_name]['trait'].write('\t}\n')
+			outs_rs[class_name]['trait'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret(rettype)};\n")
 			if rettype == 'void':
 				outs_cpp.write('{ NullFuncPtr(); }\n')
 			else:
