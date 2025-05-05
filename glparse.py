@@ -689,6 +689,7 @@ def do_parse(parsefile, glxml):
 		outs_rs['global']['struct'].write(f'\tpub {global_member[0]}: {global_member[1]},\n')
 		outs_rs['global']['impl'].write(f'impl {rs_trait_name} for {rs_global_struct_name} {"{"}\n')
 		outs_rs['global']['members'] += [global_member]
+
 		outs_rs[class_name]['struct'].write(f'{rust_derive}\n')
 		outs_rs[class_name]['struct'].write(f'pub struct {class_name} {"{"}\n')
 		outs_rs[class_name]['impl'].write(f'impl {rs_trait_name} for {class_name} {"{"}\n')
@@ -984,7 +985,7 @@ def do_parse(parsefile, glxml):
 			outs_rs[class_name]['impl'].write('\t\tret\n')
 		else:
 			if 'SHADING_LANGUAGE_VERSION' in curver['define'].keys():
-				outs_rs[class_name]['impl'].write('\t\tshading_language_version: unsafe{CStr::from_ptr(self.glGetString(Self::SHADING_LANGUAGE_VERSION) as *const i8)}.to_str().unwrap(),\n')
+				outs_rs[class_name]['impl'].write('\t\t\tshading_language_version: unsafe{CStr::from_ptr(base.glGetString(SHADING_LANGUAGE_VERSION) as *const i8)}.to_str().unwrap(),\n')
 			outs_rs[class_name]['impl'].write('\t\t}\n')
 		outs_rs[class_name]['impl'].write('\t}\n')
 
@@ -1363,11 +1364,11 @@ def do_parse(parsefile, glxml):
 			membername = funcn[len(prefix):]
 			outs_rs[class_name]['impl'].write(f'\t\t\t{membername.lower()}: null,\n')
 		if 'SHADING_LANGUAGE_VERSION' in curver['define'].keys():
-			outs_rs[class_name]['impl'].write('\t\tshading_language_version: "unknown",\n')
+			outs_rs[class_name]['impl'].write('\t\t\tshading_language_version: "unknown",\n')
 
 		outs_rs[class_name]['impl'].write('\t\t}\n')
 		outs_rs[class_name]['impl'].write('\t}\n')
-		outs_rs[class_name]['impl'].write("}\n\n")
+		outs_rs[class_name]['impl'].write("}\n")
 
 		def mergeinto(desc, data):
 			nonlocal outs_csharp
