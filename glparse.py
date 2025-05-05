@@ -936,6 +936,17 @@ def do_parse(parsefile, glxml):
 			outs_rs['global']['impl'].write("\tfn get_versionstr(&self) -> &'static str {\n")
 			outs_rs['global']['impl'].write(f"\t\tself.{firstver_name.lower()}.get_versionstr()\n")
 			outs_rs['global']['impl'].write("\t}\n")
+		elif 'SHADING_LANGUAGE_VERSION' in curver['define'].keys():
+			outs_hpp.write('\t\tinline std::string GetShadingLanguageVersion() { return ShadingLanguageVersion; }\n')
+			outs_rs[class_name]['trait'].write("\tfn get_shading_language_version(&self) -> &'static str;\n")
+			outs_rs[class_name]['impl'].write("\t#[inline(always)]\n")
+			outs_rs[class_name]['impl'].write("\tfn get_shading_language_version(&self) -> &'static str {\n")
+			outs_rs[class_name]['impl'].write("\t\tself.shading_language_version\n")
+			outs_rs[class_name]['impl'].write("\t}\n")
+			outs_rs['global']['impl'].write("\t#[inline(always)]\n")
+			outs_rs['global']['impl'].write("\tfn get_shading_language_version(&self) -> &'static str {\n")
+			outs_rs['global']['impl'].write(f"\t\tself.{version_name.lower()}.shading_language_version\n")
+			outs_rs['global']['impl'].write("\t}\n")
 		outs_rs[class_name]['impl'].write("}\n\n")
 		outs_rs[class_name]['impl'].write(f"impl {class_name} {'{'}\n")
 		outs_rs[class_name]['impl'].write("\tpub fn new(get_proc_address: impl Fn(&'static str) -> *const c_void) -> Self {\n")
@@ -1124,13 +1135,6 @@ def do_parse(parsefile, glxml):
 			outs_hpp.write('\t\tinline std::string GetVendor() { return Vendor; }\n')
 			outs_hpp.write('\t\tinline std::string GetRenderer() { return Renderer; }\n')
 			outs_hpp.write('\t\tinline std::string GetVersion() { return Version; }\n')
-		elif 'SHADING_LANGUAGE_VERSION' in curver['define'].keys():
-			outs_hpp.write('\t\tinline std::string GetShadingLanguageVersion() { return ShadingLanguageVersion; }\n')
-			outs_rs[class_name]['impl'].write("\t#[inline(always)]\n")
-			outs_rs[class_name]['impl'].write("\tpub fn get_shading_language_version(&self) -> &'static str {\n")
-			outs_rs[class_name]['impl'].write("\t\tself.shading_language_version\n")
-			outs_rs[class_name]['impl'].write("\t}\n")
-			outs_rs[class_name]['trait'].write("\tfn get_shading_language_version(&self) -> &'static str;\n")
 
 		csharp_utilities.write('\t\tprivate readonly bool Available;\n')
 
