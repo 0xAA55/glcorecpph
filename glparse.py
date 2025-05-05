@@ -346,6 +346,7 @@ def do_parse(parsefile, glxml):
 	version_name = None
 	last_version = None
 	firstver_name = None
+	firstver_classname = None
 	outs_hpp = io.StringIO()
 	outs_cpp = io.StringIO()
 	outs_csharp = io.StringIO()
@@ -811,7 +812,8 @@ def do_parse(parsefile, glxml):
 
 		l_class_name = None
 		if last_version is None:
-			firstver_name = class_name
+			firstver_name = version_name
+			firstver_classname = class_name
 			outs_hpp.write(f'\tclass {class_name}\n')
 			outs_csharp.write(f'\tclass {class_name}\n')
 			outs_csharp.write('\t{\n')
