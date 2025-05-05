@@ -3,3 +3,4 @@ glcore.hpp
 glcore.cs
 glcore.json
 glcore.rs
+*.txt
