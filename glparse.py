@@ -805,7 +805,7 @@ def do_parse(parsefile, glxml):
 			calltype = fpdata['calltype']
 			arglist = fpdata['arglist']
 			outs_hpp.write(f'\tusing {functype} = {rettype} ({calltype}) ({arglist});\n')
-			outs_rs[class_name]['predef'].write(f'type {functype} = extern "system" fn({rs_arg_fp(arglist)}){rs_ret(rettype)};')
+			outs_rs[class_name]['trait'].write(f'\ttype {functype} = extern "system" fn({rs_arg_fp(arglist)}){rs_ret(rettype)};')
 			csharp_delecb.write(f'\t\tpublic delegate {csret(rettype)} {functype} ({csargs(arglist)});\n')
 		outs_hpp.write('\n')
 
@@ -914,7 +914,7 @@ def do_parse(parsefile, glxml):
 			pproto = type2proto[functype]
 			proto = pproto[len(prefix):]
 			outs_hpp.write(f'\t\tusing {functype} = {rettype} ({calltype}) ({arglist});\n')
-			outs_rs[class_name]['predef'].write(f'type {functype} = extern "system" fn({rs_arg_fp(arglist)}){rs_ret(rettype)};\n')
+			outs_rs[class_name]['trait'].write(f'\ttype {functype} = extern "system" fn({rs_arg_fp(arglist)}){rs_ret(rettype)};\n')
 			args = [arg.strip() for arg in arglist.split(',')]
 			#if proto.startswith('Gen') and proto.endswith('s') and len(args) == 2 and args[0].endswith((' n', ' count')) and args[1].count('*') == 1 and 'const' not in args[1] and rettype == 'void':
 			if '*' in arglist:
@@ -1091,7 +1091,7 @@ def do_parse(parsefile, glxml):
 			else:
 				deft = enumtype[f'{PREFIX_}{defn}']
 			outs_hpp.write(f'\t\tstatic constexpr {deft} {defn} = {defv};\n')
-			outs_rs[class_name]['impl'].write(f"\tpub const {defn}: {deft} = {defv};\n")
+			outs_rs[class_name]['trait'].write(f"\tconst {defn}: {deft} = {rs_const_value(defv)};\n")
 			if deft == 'GLuint64':
 				csdefv = defv.replace('ull', 'ul')
 			elif deft == 'GLint64':
