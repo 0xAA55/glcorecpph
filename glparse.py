@@ -439,7 +439,7 @@ def do_parse(parsefile, glxml):
 
 	outs_rs['global']['predef'].write('#![allow(non_camel_case_types)]\n')
 	outs_rs['global']['predef'].write('#![allow(dead_code)]\n')
-	outs_rs['global']['predef'].write("use std::{mem::transmute, ffi::{c_void, CStr}, fmt::Debug, ptr::null};\n")
+	outs_rs['global']['predef'].write("use std::{mem::transmute, ffi::{c_void, CStr}, fmt::Debug};\n")
 	outs_rs['global']['predef'].write('type khronos_float_t = f32;\n')
 	outs_rs['global']['predef'].write('type khronos_ssize_t = usize;\n')
 	outs_rs['global']['predef'].write('type khronos_intptr_t = usize;\n')
@@ -1171,6 +1171,17 @@ def do_parse(parsefile, glxml):
 		outs_hpp.write('\n')
 		csharp_utilities.write(f'\t\tpublic bool {class_name}IsAvailable {"{"}get => Available;{"}"}\n')
 
+		for functype, fpdata in curver['functype'].items():
+			if functype not in type2proto: continue
+			rettype = fpdata['ret']
+			calltype = fpdata['calltype']
+			arglist = fpdata['arglist']
+			pproto = type2proto[functype]
+			proto = pproto[len(prefix):]
+			outs_rs[class_name]['predef'].write(f'extern "system" fn dummy_{functype.lower()} ({rs_arg(arglist, emit_argn = True, with_self = False)}){rs_ret(rettype)} {"{"}\n')
+			outs_rs[class_name]['predef'].write(f'\tpanic!("OpenGL Function pointer of {pproto}() is NULL");\n')
+			outs_rs[class_name]['predef'].write('}\n')
+
 		for defn, defv in curver['define'].items():
 			if defv.startswith('0x'):
 				if defv.endswith('ull'):
@@ -1362,7 +1373,8 @@ def do_parse(parsefile, glxml):
 			outs_rs[class_name]['impl'].write("\t\t\tavailable: false,\n")
 		for funcn, funcproto in curver['funcproto'].items():
 			membername = funcn[len(prefix):]
-			outs_rs[class_name]['impl'].write(f'\t\t\t{membername.lower()}: null(),\n')
+			functype = f'PFN{funcn.upper()}PROC'
+			outs_rs[class_name]['impl'].write(f'\t\t\t{membername.lower()}: dummy_{functype.lower()},\n')
 		if 'SHADING_LANGUAGE_VERSION' in curver['define'].keys():
 			outs_rs[class_name]['impl'].write('\t\t\tshading_language_version: "unknown",\n')
 
