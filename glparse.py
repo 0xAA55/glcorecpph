@@ -448,6 +448,8 @@ def do_parse(parsefile, glxml):
 	outs_rs['global']['predef'].write('type khronos_uint16_t = u16;\n')
 	outs_rs['global']['predef'].write('type khronos_int64_t = i64;\n')
 	outs_rs['global']['predef'].write('type khronos_uint64_t = u64;\n')
+	outs_rs['global']['struct'].write(f'{rust_derive}\n')
+	outs_rs['global']['struct'].write(f'pub struct {rs_global_struct_name} {"{"}\n')
 
 	def rs_type_conv(cpptype):
 		try:
@@ -679,6 +681,10 @@ def do_parse(parsefile, glxml):
 			'trait': io.StringIO(),
 		}
 
+		global_member = (version_name.lower(), class_name)
+		outs_rs['global']['struct'].write(f'\tpub {global_member[0]}: {global_member[1]},\n')
+		outs_rs['global']['impl'].write(f'impl {rs_trait_name} for {rs_global_struct_name} {"{"}\n')
+		outs_rs['global']['members'] += [global_member]
 		outs_rs[class_name]['struct'].write(f'{rust_derive}\n')
 		outs_rs[class_name]['struct'].write(f'pub struct {class_name} {"{"}\n')
 		outs_rs[class_name]['impl'].write(f'impl {rs_trait_name} for {class_name} {"{"}\n')
@@ -1331,10 +1337,65 @@ def do_parse(parsefile, glxml):
 	for swallow in _chew(parsefile):
 		on_stomach[swallow['type']](swallow)
 
+	outs_rs['global']['struct'].write("}\n")
+
+	rs_global_members = outs_rs['global']['members']
+	first_member_name = rs_global_members[0][0]
+
+	outs_rs['global']['impl'].write(f'impl {rs_global_struct_name} {"{"}\n')
+	outs_rs['global']['impl'].write("\tpub fn new(get_proc_address: &impl Fn(&'static str) -> *const c_void) -> Self {\n")
+	outs_rs['global']['impl'].write(f'\t\tlet {first_member_name} = {firstver_classname}::new(get_proc_address);\n')
+	outs_rs['global']['impl'].write(f'\t\tif !{first_member_name}.available {"{"}\n')
+	outs_rs['global']['impl'].write(f'\t\t\treturn Self::default();\n')
+	outs_rs['global']['impl'].write('\t\t}\n')
+	outs_rs['global']['impl'].write('\t\tSelf {\n')
+	outs_rs['global']['impl'].write(f'\t\t\t{first_member_name},\n')
+	for i in range(1, len(rs_global_members)):
+		name, type = rs_global_members[i]
+		outs_rs['global']['impl'].write(f'\t\t\t{name}: {type}::new({first_member_name}, get_proc_address),\n')
+	outs_rs['global']['impl'].write('\t\t}\n')
+	outs_rs['global']['impl'].write('\t}\n')
+	outs_rs['global']['impl'].write('}\n\n')
+
+	outs_rs['global']['impl'].write(f'impl Default for {rs_global_struct_name} {"{"}\n')
+	outs_rs['global']['impl'].write("\tfn default() -> Self {\n")
+	outs_rs['global']['impl'].write('\t\tSelf {\n')
+	for member in rs_global_members:
+		name, type = member
+		outs_rs['global']['impl'].write(f'\t\t\t{name}: {type}::default(),\n')
+	outs_rs['global']['impl'].write('\t\t}\n')
+	outs_rs['global']['impl'].write('\t}\n')
+	outs_rs['global']['impl'].write('}\n\n')
+
+	super_trait = " +\n".join(rs_traits)
+	outs_rs['global']['impl'].write(f'pub trait GL: Debug + Clone + Copy + Sized +\n{super_trait} {"{}"}\n')
+	outs_rs['global']['impl'].write('\n')
+	#outs_rs['global']['impl'].write(f'impl<T> GL for T where T: Debug + Clone + Copy + Sized +\n{super_trait} {"{}"}\n')
+	outs_rs['global']['impl'].write(f'impl GL for {rs_global_struct_name} {"{}"}\n')
+	outs_rs['global']['impl'].write('\n')
+
 	outs_hpp.write('};\n')
 	outs_cpp.write('};\n')
 	outs_csharp.write('};\n')
-	outs_rs = '\n'.join(['\n'.join([ver['predef'].getvalue(), ver['trait'].getvalue(), ver['struct'].getvalue(), ver['impl'].getvalue()]) for (key, ver) in outs_rs.items()])
+	rs_items = []
+	for (key, ver) in outs_rs.items():
+		if key != 'global':
+			rs_items += [ver]
+	rs_global = outs_rs['global']
+	outs_rs = '\n'.join(
+		[rs_global['predef'].getvalue()] +
+		['\n'.join([
+			ver['predef'].getvalue(),
+			ver['trait'].getvalue(),
+			ver['struct'].getvalue(),
+			ver['impl'].getvalue()
+		]) for ver in rs_items] +
+		[
+			rs_global['trait'].getvalue(),
+			rs_global['struct'].getvalue(),
+			rs_global['impl'].getvalue()
+		]
+	)
 
 	return outs_hpp.getvalue(), outs_cpp.getvalue(), outs_csharp.getvalue(), outs_rs.replace('\n\n\n', '\n')
 
