@@ -665,6 +665,7 @@ def do_parse(parsefile, glxml):
 		curver = versions[version_name]
 		class_name = _style_change(version_name)
 		rs_trait_name = version_name.replace('VERSION', 'GL')
+		rs_traits += [rs_trait_name]
 		func2load = {} # functions to be loaded
 		overloads = {} # key: 'Xxxxx[1,2,3,4][N,I,P,L][s,f,i,d,ub,us,ui]'; value = (rettype, 'Xxxxx', arglist)
 		type2proto = curver['type2proto']
