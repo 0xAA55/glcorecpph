@@ -906,6 +906,8 @@ def do_parse(parsefile, glxml):
 			outs_rs[class_name]['impl'].write('\t\tret.fetch_version();\n')
 			outs_rs[class_name]['impl'].write('\t\tret\n')
 		else:
+			if 'SHADING_LANGUAGE_VERSION' in curver['define'].keys():
+				outs_rs[class_name]['impl'].write('\t\tshading_language_version: unsafe{CStr::from_ptr(self.glGetString(Self::SHADING_LANGUAGE_VERSION) as *const i8)}.to_str().unwrap(),\n')
 			outs_rs[class_name]['impl'].write('\t\t}\n')
 		outs_rs[class_name]['impl'].write('\t}\n')
 
