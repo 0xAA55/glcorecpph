@@ -356,6 +356,7 @@ def do_parse(parsefile, glxml):
 			'struct': io.StringIO(),
 			'impl': io.StringIO(),
 			'trait': io.StringIO(),
+			'members': [],
 		}
 	}
 
