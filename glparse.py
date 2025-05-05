@@ -893,15 +893,23 @@ def do_parse(parsefile, glxml):
 			arglist = funcproto['arglist']
 			membername = funcn[len(prefix):]
 			outs_cpp.write(f'\tstatic {rettype} {calltype} Null_{funcn} ({arglist})')
+
+			rs_ret_type = rs_ret(rettype)
+			rs_call_from_class = f'(self.{membername.lower()})({rs_call_arg(arglist)})'
+			rs_call_from_global = f'(self.{version_name.lower()}.{membername.lower()})({rs_call_arg(arglist)})'
+			if "*const GLubyte" in rs_ret_type:
+				rs_ret_type = " -> &'static str"
+				rs_call_from_class = "unsafe{CStr::from_ptr(" + rs_call_from_class + " as *const i8)}.to_str().unwrap()"
+				rs_call_from_global = "unsafe{CStr::from_ptr(" + rs_call_from_global + " as *const i8)}.to_str().unwrap()"
 			outs_rs[class_name]['impl'].write("\t#[inline(always)]\n")
-			outs_rs[class_name]['impl'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret(rettype)} {'{'}\n")
-			outs_rs[class_name]['impl'].write(f'\t\t(self.{membername.lower()})({rs_call_arg(arglist)})\n')
+			outs_rs[class_name]['impl'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type} {'{'}\n")
+			outs_rs[class_name]['impl'].write(f'\t\t{rs_call_from_class}\n')
 			outs_rs[class_name]['impl'].write('\t}\n')
 			outs_rs['global']['impl'].write("\t#[inline(always)]\n")
-			outs_rs['global']['impl'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret(rettype)} {'{'}\n")
-			outs_rs['global']['impl'].write(f'\t\t(self.{version_name.lower()}.{membername.lower()})({rs_call_arg(arglist)})\n')
+			outs_rs['global']['impl'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type} {'{'}\n")
+			outs_rs['global']['impl'].write(f'\t\t{rs_call_from_global}\n')
 			outs_rs['global']['impl'].write('\t}\n')
-			outs_rs[class_name]['trait'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret(rettype)};\n")
+			outs_rs[class_name]['trait'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type};\n")
 			if rettype == 'void':
 				outs_cpp.write('{ NullFuncPtr(); }\n')
 			else:
