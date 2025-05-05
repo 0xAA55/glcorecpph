@@ -1197,7 +1197,7 @@ def do_parse(parsefile, glxml):
 			else:
 				deft = enumtype[f'{PREFIX_}{defn}']
 			outs_hpp.write(f'\t\tstatic constexpr {deft} {defn} = {defv};\n')
-			outs_rs[class_name]['predef'].write(f"const {defn}: {deft} = {rs_const_value(defv)};\n")
+			outs_rs[class_name]['predef'].write(f"pub const GL_{defn}: {deft} = {rs_const_value(defv)};\n")
 			if deft == 'GLuint64':
 				csdefv = defv.replace('ull', 'ul')
 			elif deft == 'GLint64':
