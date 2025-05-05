@@ -900,7 +900,7 @@ def do_parse(parsefile, glxml):
 			outs_rs[class_name]['impl'].write("\t\t\tavailable: false,\n")
 		for funcn, funcproto in curver['funcproto'].items():
 			membername = funcn[len(prefix):]
-			outs_rs[class_name]['impl'].write(f'\t\t\t{membername.lower()}: get_proc_address("{funcn}") as PFN{funcn.upper()}PROC,\n')
+			outs_rs[class_name]['impl'].write(f'\t\t\t{membername.lower()}: {"unsafe{transmute("}get_proc_address("{funcn}")){"}"},\n')
 		if last_version is None:
 			outs_rs[class_name]['impl'].write('\t\t};\n')
 			outs_rs[class_name]['impl'].write('\t\tret.fetch_version();\n')
