@@ -333,7 +333,7 @@ def do_parse(parsefile, glxml):
 	csharp_keywords = {
 		'params',
 		'ref',
-		'string'
+		'string',
 	}
 
 	parsed = {
