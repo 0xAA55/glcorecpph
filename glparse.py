@@ -347,6 +347,8 @@ def do_parse(parsefile, glxml):
 	last_version = None
 	firstver_name = None
 	firstver_classname = None
+	rs_traits = []
+	rs_global_struct_name = "GLCore"
 	outs_hpp = io.StringIO()
 	outs_cpp = io.StringIO()
 	outs_csharp = io.StringIO()
