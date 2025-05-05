@@ -561,6 +561,13 @@ def do_parse(parsefile, glxml):
 		else:
 			return f' -> {ret}'
 
+	def rs_const_value(number):
+		if number.endswith('ull'):
+			number = number[:-3] + 'u64'
+		elif number.endswith('u'):
+			number = number[:-1] + 'u32'
+		return number
+
 	def _overload_check(membername) -> tuple:
 		preserve = ''
 		dimension = ''
