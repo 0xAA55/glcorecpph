@@ -1076,6 +1076,7 @@ def do_parse(parsefile, glxml):
 			outs_rs[class_name]['impl'].write("\tpub fn get_shading_language_version(&self) -> &'static str {\n")
 			outs_rs[class_name]['impl'].write("\t\tself.shading_language_version\n")
 			outs_rs[class_name]['impl'].write("\t}\n")
+			outs_rs[class_name]['trait'].write("\tfn get_shading_language_version(&self) -> &'static str;\n")
 
 		csharp_utilities.write('\t\tprivate readonly bool Available;\n')
 
