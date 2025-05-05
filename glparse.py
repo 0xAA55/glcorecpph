@@ -1261,6 +1261,7 @@ def do_parse(parsefile, glxml):
 
 		outs_cpp.write('\n')
 		outs_rs[class_name]['impl'].write("}\n")
+		outs_rs[class_name]['trait'].write("}\n")
 
 		def mergeinto(desc, data):
 			nonlocal outs_csharp
