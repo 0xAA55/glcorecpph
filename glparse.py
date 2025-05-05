@@ -969,7 +969,7 @@ def do_parse(parsefile, glxml):
 		else:
 			l_class_name = _style_change(last_version)
 			outs_rs[class_name]['impl'].write(f"\tpub fn new(base: impl {rs_first_trait_name}, get_proc_address: &impl Fn(&'static str) -> *const c_void) -> Self {'{'}\n")
-			outs_rs[class_name]['impl'].write("\t\tlet (spec, major, minor, release) = base.get_version();\n")
+			outs_rs[class_name]['impl'].write("\t\tlet (_spec, major, minor, release) = base.get_version();\n")
 			outs_rs[class_name]['impl'].write("\t\tlet bigver = major.clamp(0, 100) * 10000 + minor.clamp(0, 99) * 100 + release.clamp(0, 99);\n")
 			outs_rs[class_name]['impl'].write(f"\t\tif bigver < {int(major) * 10000 + int(minor) * 100 + int(release)} {'{'}\n")
 			outs_rs[class_name]['impl'].write("\t\t\treturn Self::default();\n")
