@@ -9,7 +9,7 @@ PREFIX = prefix.upper()
 prefix_ = f'{prefix}_'
 PREFIX_ = f'{PREFIX}_'
 modname = 'glcore'
-rust_derive = '#[derive(Debug, Clone, Copy)]'
+rust_derive = '#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]'
 
 def do_parse_glxml(glxmlfile):
 	group_data = {}
