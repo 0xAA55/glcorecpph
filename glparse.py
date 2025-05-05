@@ -354,6 +354,7 @@ def do_parse(parsefile, glxml):
 			'predef': io.StringIO(),
 			'struct': io.StringIO(),
 			'impl': io.StringIO(),
+			'trait': io.StringIO(),
 		}
 	}
 
@@ -657,6 +658,7 @@ def do_parse(parsefile, glxml):
 		nonlocal firstver_name, last_version, parsed, outs_hpp, outs_cpp, outs_csharp, outs_rs, csharp_typeconv
 		curver = versions[version_name]
 		class_name = _style_change(version_name)
+		rs_trait_name = version_name.replace('VERSION', 'GL')
 		func2load = {} # functions to be loaded
 		overloads = {} # key: 'Xxxxx[1,2,3,4][N,I,P,L][s,f,i,d,ub,us,ui]'; value = (rettype, 'Xxxxx', arglist)
 		type2proto = curver['type2proto']
@@ -666,11 +668,13 @@ def do_parse(parsefile, glxml):
 			'predef': io.StringIO(),
 			'struct': io.StringIO(),
 			'impl': io.StringIO(),
+			'trait': io.StringIO(),
 		}
 
 		outs_rs[class_name]['struct'].write(f'{rust_derive}\n')
 		outs_rs[class_name]['struct'].write(f'pub struct {class_name} {"{"}\n')
-		outs_rs[class_name]['impl'].write(f'impl {class_name} {"{"}\n')
+		outs_rs[class_name]['impl'].write(f'impl {rs_trait_name} for {class_name} {"{"}\n')
+		outs_rs[class_name]['trait'].write(f'pub trait {rs_trait_name} {"{"}\n')
 
 		for target_type, typealias in curver['typealias'].items():
 			outs_hpp.write(f'\ttypedef {target_type} {", ".join(typealias)};\n')
