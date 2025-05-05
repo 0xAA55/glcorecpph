@@ -882,7 +882,9 @@ def do_parse(parsefile, glxml):
 				outs_cpp.write('{ NullFuncPtr(); }\n')
 			else:
 				outs_cpp.write('{ NullFuncPtr(); return 0; }\n')
-		outs_rs[class_name]['impl'].write("\tpub fn new(get_proc_address: Fn(&'static str) -> *const c_void) -> Self {\n")
+		outs_rs[class_name]['impl'].write("}\n")
+		outs_rs[class_name]['impl'].write(f"impl {class_name} {'{'}\n")
+		outs_rs[class_name]['impl'].write("\tpub fn new(get_proc_address: impl Fn(&'static str) -> *const c_void) -> Self {\n")
 		if last_version is None:
 			outs_rs[class_name]['impl'].write("\t\tlet mut ret = Self {\n")
 			outs_rs[class_name]['impl'].write("\t\t\tmajor_version = 0,\n")
