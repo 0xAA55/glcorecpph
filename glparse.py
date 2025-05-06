@@ -9,7 +9,8 @@ PREFIX = prefix.upper()
 prefix_ = f'{prefix}_'
 PREFIX_ = f'{PREFIX}_'
 modname = 'glcore'
-rust_derive = '#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]'
+rust_derive = '#[derive(Clone, Copy, PartialEq, Eq, Hash)]'
+rust_derive_global = '#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]'
 
 def do_parse_glxml(glxmlfile):
 	group_data = {}
@@ -441,7 +442,7 @@ def do_parse(parsefile, glxml):
 	outs_rs['global']['predef'].write('#![allow(non_snake_case)]\n')
 	outs_rs['global']['predef'].write('#![allow(non_camel_case_types)]\n')
 	outs_rs['global']['predef'].write('#![allow(non_upper_case_globals)]\n')
-	outs_rs['global']['predef'].write("use std::{mem::transmute, ffi::{c_void, CStr}, fmt::Debug, ptr::null};\n")
+	outs_rs['global']['predef'].write("use std::{mem::transmute, ffi::{c_void, CStr}, fmt::{self, Debug, Formatter}, ptr::null};\n")
 	outs_rs['global']['predef'].write('type khronos_float_t = f32;\n')
 	outs_rs['global']['predef'].write('type khronos_ssize_t = usize;\n')
 	outs_rs['global']['predef'].write('type khronos_intptr_t = usize;\n')
@@ -450,7 +451,7 @@ def do_parse(parsefile, glxml):
 	outs_rs['global']['predef'].write('type khronos_uint16_t = u16;\n')
 	outs_rs['global']['predef'].write('type khronos_int64_t = i64;\n')
 	outs_rs['global']['predef'].write('type khronos_uint64_t = u64;\n')
-	outs_rs['global']['struct'].write(f'{rust_derive}\n')
+	outs_rs['global']['struct'].write(f'{rust_derive_global}\n')
 	outs_rs['global']['struct'].write(f'pub struct {rs_global_struct_name} {"{"}\n')
 
 	def rs_type_conv(cpptype):
@@ -1392,6 +1393,35 @@ def do_parse(parsefile, glxml):
 		outs_rs[class_name]['impl'].write('\t\t}\n')
 		outs_rs[class_name]['impl'].write('\t}\n')
 		outs_rs[class_name]['impl'].write("}\n")
+
+		outs_rs[class_name]['impl'].write(f'impl Debug for {class_name} {"{"}\n')
+		outs_rs[class_name]['impl'].write("\tfn fmt(&self, f: &mut Formatter) -> fmt::Result {\n")
+		outs_rs[class_name]['impl'].write('\t\tif self.available {\n')
+		outs_rs[class_name]['impl'].write(f'\t\t\tf.debug_struct("{class_name}")\n')
+		outs_rs[class_name]['impl'].write(f'\t\t\t.field("available", &self.available)\n')
+		if last_version is None:
+			outs_rs[class_name]['impl'].write(f'\t\t\t.field("spec", &self.spec)\n')
+			outs_rs[class_name]['impl'].write(f'\t\t\t.field("major_version", &self.major_version)\n')
+			outs_rs[class_name]['impl'].write(f'\t\t\t.field("minor_version", &self.minor_version)\n')
+			outs_rs[class_name]['impl'].write(f'\t\t\t.field("release_version", &self.release_version)\n')
+			outs_rs[class_name]['impl'].write(f'\t\t\t.field("vendor", &self.vendor)\n')
+			outs_rs[class_name]['impl'].write(f'\t\t\t.field("renderer", &self.renderer)\n')
+			outs_rs[class_name]['impl'].write(f'\t\t\t.field("version", &self.version)\n')
+		elif 'SHADING_LANGUAGE_VERSION' in curver['define'].keys():
+			outs_rs[class_name]['impl'].write(f'\t\t\t.field("shading_language_version", &self.shading_language_version)\n')
+		for funcn, funcproto in curver['funcproto'].items():
+			membername = funcn[len(prefix):].lower()
+			functype = f'PFN{funcn.upper()}PROC'
+			dummyfunc = f'dummy_{functype.lower()}'
+			outs_rs[class_name]['impl'].write(f'\t\t\t.field("{membername}", unsafe' + '{' + f'if transmute::<_, *const c_void>(self.{membername}) == ({dummyfunc} as *const c_void) ' + '{' + f'&null::<{functype}>()' + '} else {' + f'&self.{membername}' + '}})\n')
+		outs_rs[class_name]['impl'].write(f'\t\t\t.finish()\n')
+		outs_rs[class_name]['impl'].write('\t\t} else {\n')
+		outs_rs[class_name]['impl'].write(f'\t\t\tf.debug_struct("{class_name}")\n')
+		outs_rs[class_name]['impl'].write(f'\t\t\t.field("available", &self.available)\n')
+		outs_rs[class_name]['impl'].write(f'\t\t\t.finish_non_exhaustive()\n')
+		outs_rs[class_name]['impl'].write('\t\t}\n')
+		outs_rs[class_name]['impl'].write('\t}\n')
+		outs_rs[class_name]['impl'].write('}\n\n')
 
 		def mergeinto(desc, data):
 			nonlocal outs_csharp
