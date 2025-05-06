@@ -1503,7 +1503,6 @@ def do_parse(parsefile, glxml):
 	super_trait = " +\n".join(rs_traits)
 	outs_rs['global']['impl'].write(f'pub trait GL: Debug + Clone + Copy + Sized +\n{super_trait} {"{}"}\n')
 	outs_rs['global']['impl'].write('\n')
-	#outs_rs['global']['impl'].write(f'impl<T> GL for T where T: Debug + Clone + Copy + Sized +\n{super_trait} {"{}"}\n')
 	outs_rs['global']['impl'].write(f'impl GL for {rs_global_struct_name} {"{}"}\n')
 	outs_rs['global']['impl'].write('\n')
 
