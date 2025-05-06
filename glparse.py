@@ -479,7 +479,17 @@ def do_parse(parsefile, glxml):
 				'*mut __GLsync': '*mut c_void',
 			}[cpptype]
 		except KeyError as e:
-			print(f'Unknown cpp type for rust: {e}')
+			if cpptype not in {
+				"khronos_float_t",
+				"khronos_ssize_t",
+				"khronos_intptr_t",
+				"khronos_int16_t",
+				"khronos_int8_t",
+				"khronos_uint16_t",
+				"khronos_int64_t",
+				"khronos_uint64_t",
+			}:
+				print(f'Unknown cpp type for rust: {e}')
 			return cpptype
 
 	def rs_keyword_rename(ident):
