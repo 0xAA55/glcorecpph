@@ -443,6 +443,7 @@ def do_parse(parsefile, glxml):
 	outs_rs['global']['predef'].write('#![allow(non_snake_case)]\n')
 	outs_rs['global']['predef'].write('#![allow(non_camel_case_types)]\n')
 	outs_rs['global']['predef'].write('#![allow(non_upper_case_globals)]\n')
+	outs_rs['global']['predef'].write('#![allow(unpredictable_function_pointer_comparisons)]\n')
 	outs_rs['global']['predef'].write("use std::{\n")
 	outs_rs['global']['predef'].write("\tmem::transmute,\n")
 	outs_rs['global']['predef'].write("\tffi::{c_void, CStr},\n")
