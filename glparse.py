@@ -1261,8 +1261,8 @@ def do_parse(parsefile, glxml):
 			arglist = fpdata['arglist']
 			pproto = type2proto[functype]
 			proto = pproto[len(prefix):]
-			outs_rs[class_name]['predef'].write(f'extern "system" fn dummy_{functype.lower()} ({rs_arg(arglist, emit_argn = True, with_self = False)}){rs_ret(rettype)} {"{"}\n')
-			outs_rs[class_name]['predef'].write(f'\tpanic!("OpenGL Function pointer of `{pproto}()` is NULL");\n')
+			outs_rs[class_name]['predef'].write(f'extern "system" fn dummy_{functype.lower()} ({rs_arg(arglist, emit_argn = True, with_self = False)}){rs_ret(rettype, use_result = False)} {{\n')
+			outs_rs[class_name]['predef'].write(f'\tpanic!("OpenGL function pointer `{pproto}()` is null.")\n')
 			outs_rs[class_name]['predef'].write('}\n')
 
 		for defn, defv in curver['define'].items():
