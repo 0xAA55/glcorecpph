@@ -487,6 +487,7 @@ def do_parse(parsefile, glxml):
 	outs_rs['global']['predef'].write('pub type khronos_uint16_t = u16;\n')
 	outs_rs['global']['predef'].write('pub type khronos_int64_t = i64;\n')
 	outs_rs['global']['predef'].write('pub type khronos_uint64_t = u64;\n')
+	outs_rs['global']['predef'].write('\n')
 	outs_rs['global']['struct'].write(f'{rust_derive_global}\n')
 	outs_rs['global']['struct'].write(f'pub struct {rs_global_struct_name} {"{"}\n')
 
