@@ -1077,7 +1077,7 @@ def do_parse(parsefile, glxml):
 			pproto = type2proto[functype]
 			proto = pproto[len(prefix):]
 			outs_hpp.write(f'\t\tusing {functype} = {rettype} ({calltype}) ({arglist});\n')
-			outs_rs[class_name]['predef'].write(f'type {functype} = extern "system" fn({rs_arg_fp(arglist)}){rs_ret(rettype)};\n')
+			outs_rs[class_name]['predef'].write(f'type {functype} = extern "system" fn({rs_arg_fp(arglist)}){rs_ret(rettype, use_result = False)};\n')
 			args = [arg.strip() for arg in arglist.split(',')]
 			#if proto.startswith('Gen') and proto.endswith('s') and len(args) == 2 and args[0].endswith((' n', ' count')) and args[1].count('*') == 1 and 'const' not in args[1] and rettype == 'void':
 			if '*' in arglist:
