@@ -1050,7 +1050,7 @@ def do_parse(parsefile, glxml):
 		outs_rs['global']['impl'].write('}\n\n')
 		outs_rs[class_name]['impl'].write(f"impl {class_name} {{\n")
 		if last_version is None:
-			outs_rs[class_name]['impl'].write("\tpub fn new(mut get_proc_address: impl FnMut(&'static str) -> *const c_void) -> Self {\n")
+			outs_rs[class_name]['impl'].write("\tpub fn new(mut get_proc_address: impl FnMut(&'static str) -> *const c_void) -> Result<Self> {\n")
 			outs_rs[class_name]['impl'].write("\t\tlet mut ret = Self {\n")
 			outs_rs[class_name]['impl'].write("\t\t\tavailable: true,\n")
 			outs_rs[class_name]['impl'].write('\t\t\tspec: "unknown",\n')
@@ -1081,8 +1081,8 @@ def do_parse(parsefile, glxml):
 			outs_rs[class_name]['impl'].write(f'\t\t\t{membername.lower()}: ' + '{let proc = get_proc_address("' + funcn + '"); if proc == null() {dummy_' + functype.lower() + '} else {unsafe{transmute(proc)}}},\n')
 		if last_version is None:
 			outs_rs[class_name]['impl'].write('\t\t};\n')
-			outs_rs[class_name]['impl'].write('\t\tret.fetch_version();\n')
-			outs_rs[class_name]['impl'].write('\t\tret\n')
+			outs_rs[class_name]['impl'].write('\t\tret.fetch_version()?;\n')
+			outs_rs[class_name]['impl'].write('\t\tOk(ret)\n')
 		else:
 			if 'SHADING_LANGUAGE_VERSION' in curver['define'].keys():
 				outs_rs[class_name]['impl'].write('\t\t\tshading_language_version: base.glGetString(GL_SHADING_LANGUAGE_VERSION),\n')
