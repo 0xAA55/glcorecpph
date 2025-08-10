@@ -489,7 +489,7 @@ def do_parse(parsefile, glxml):
 	outs_rs['global']['predef'].write('pub type khronos_uint64_t = u64;\n')
 	outs_rs['global']['predef'].write('\n')
 	outs_rs['global']['struct'].write(f'{rust_derive_global}\n')
-	outs_rs['global']['struct'].write(f'pub struct {rs_global_struct_name} {"{"}\n')
+	outs_rs['global']['struct'].write(f'pub struct {rs_global_struct_name} {{\n')
 
 	def rs_type_conv(cpptype):
 		try:
@@ -744,13 +744,13 @@ def do_parse(parsefile, glxml):
 
 		global_member = (version_name.lower(), class_name)
 		outs_rs['global']['struct'].write(f'\tpub {global_member[0]}: {global_member[1]},\n')
-		outs_rs['global']['impl'].write(f'impl {rs_trait_name} for {rs_global_struct_name} {"{"}\n')
+		outs_rs['global']['impl'].write(f'impl {rs_trait_name} for {rs_global_struct_name} {{\n')
 		outs_rs['global']['members'] += [global_member]
 
 		outs_rs[class_name]['struct'].write(f'{rust_derive}\n')
-		outs_rs[class_name]['struct'].write(f'pub struct {class_name} {"{"}\n')
-		outs_rs[class_name]['impl'].write(f'impl {rs_trait_name} for {class_name} {"{"}\n')
-		outs_rs[class_name]['trait'].write(f'pub trait {rs_trait_name} {"{"}\n')
+		outs_rs[class_name]['struct'].write(f'pub struct {class_name} {{\n')
+		outs_rs[class_name]['impl'].write(f'impl {rs_trait_name} for {class_name} {{\n')
+		outs_rs[class_name]['trait'].write(f'pub trait {rs_trait_name} {{\n')
 
 		for target_type, typealias in curver['typealias'].items():
 			outs_hpp.write(f'\ttypedef {target_type} {", ".join(typealias)};\n')
@@ -1015,7 +1015,7 @@ def do_parse(parsefile, glxml):
 			outs_rs['global']['impl'].write("\t}\n")
 		outs_rs[class_name]['impl'].write("}\n\n")
 		outs_rs['global']['impl'].write('}\n\n')
-		outs_rs[class_name]['impl'].write(f"impl {class_name} {'{'}\n")
+		outs_rs[class_name]['impl'].write(f"impl {class_name} {{\n")
 		if last_version is None:
 			outs_rs[class_name]['impl'].write("\tpub fn new(mut get_proc_address: impl FnMut(&'static str) -> *const c_void) -> Self {\n")
 			outs_rs[class_name]['impl'].write("\t\tlet mut ret = Self {\n")
@@ -1033,9 +1033,9 @@ def do_parse(parsefile, glxml):
 			outs_rs[class_name]['trait'].write("\tfn get_versionstr(&self) -> &'static str;\n")
 		else:
 			l_class_name = _style_change(last_version)
-			outs_rs[class_name]['impl'].write(f"\tpub fn new(base: impl {rs_first_trait_name}, mut get_proc_address: impl FnMut(&'static str) -> *const c_void) -> Self {'{'}\n")
+			outs_rs[class_name]['impl'].write(f"\tpub fn new(base: impl {rs_first_trait_name}, mut get_proc_address: impl FnMut(&'static str) -> *const c_void) -> Self {{\n")
 			outs_rs[class_name]['impl'].write("\t\tlet (_spec, major, minor, release) = base.get_version();\n")
-			outs_rs[class_name]['impl'].write(f"\t\tif (major, minor, release) < ({major}, {minor}, {release}) {'{'}\n")
+			outs_rs[class_name]['impl'].write(f"\t\tif (major, minor, release) < ({major}, {minor}, {release}) {{\n")
 			outs_rs[class_name]['impl'].write("\t\t\treturn Self::default();\n")
 			outs_rs[class_name]['impl'].write("\t\t}\n")
 			outs_rs[class_name]['impl'].write("\t\tSelf {\n")
@@ -1235,9 +1235,9 @@ def do_parse(parsefile, glxml):
 		outs_hpp.write(f'\t\t{class_name}() = delete;\n')
 		outs_hpp.write(f'\t\t{class_name}(Func_GetProcAddress GetProcAddress);\n')
 
-		outs_hpp.write(f'\t\tinline bool {class_name}IsAvailable() {"{"} return Available; {"}"}\n')
+		outs_hpp.write(f'\t\tinline bool {class_name}IsAvailable() {{ return Available; }}\n')
 		outs_hpp.write('\n')
-		csharp_utilities.write(f'\t\tpublic bool {class_name}IsAvailable {"{"}get => Available;{"}"}\n')
+		csharp_utilities.write(f'\t\tpublic bool {class_name}IsAvailable {{get => Available;}}\n')
 
 		for functype, fpdata in curver['functype'].items():
 			if functype not in type2proto: continue
@@ -1300,16 +1300,16 @@ def do_parse(parsefile, glxml):
 
 		for membername, ovld in overloads.items():
 			functype, rettype, ovlpre, arglist = ovld
-			outs_hpp.write(f'\t\tinline {rettype} {ovlpre}({arglist}) const {"{"} ')
+			outs_hpp.write(f'\t\tinline {rettype} {ovlpre}({arglist}) const {{ ')
 			if rettype != 'void': outs_hpp.write('return ')
-			outs_hpp.write(f'{membername}({", ".join([pname.strip() for ptype, pname in [param.rsplit(" ", 1) for param in arglist.split(", ")]])});{"}"}\n')
+			outs_hpp.write(f'{membername}({", ".join([pname.strip() for ptype, pname in [param.rsplit(" ", 1) for param in arglist.split(", ")]])});}}\n')
 
 		for proto, funcinfos in csharp_olfuncs.items():
 			for funcinfo in funcinfos:
 				rettype, membername, csarglist, unsafe = funcinfo
-				csharp_overloads.write(f'\t\tpublic {"unsafe " if unsafe else ""}{csret(rettype)} {proto}({csarglist}) {"{"} ')
+				csharp_overloads.write(f'\t\tpublic {"unsafe " if unsafe else ""}{csret(rettype)} {proto}({csarglist}) {{ ')
 				if rettype != 'void': csharp_overloads.write('return ')
-				csharp_overloads.write(f'{membername}({cscallarg(csarglist)}); {"}"}\n')
+				csharp_overloads.write(f'{membername}({cscallarg(csarglist)}); }}\n')
 
 		outs_hpp.write('\t};\n')
 		outs_rs[class_name]['struct'].write("}\n")
@@ -1422,7 +1422,7 @@ def do_parse(parsefile, glxml):
 		outs_rs[class_name]['impl'].write("}\n\n")
 		outs_rs[class_name]['trait'].write("}\n")
 
-		outs_rs[class_name]['impl'].write(f"impl Default for {class_name} {'{'}\n")
+		outs_rs[class_name]['impl'].write(f"impl Default for {class_name} {{\n")
 		outs_rs[class_name]['impl'].write("\tfn default() -> Self {\n")
 
 		if last_version is None:
@@ -1450,7 +1450,7 @@ def do_parse(parsefile, glxml):
 		outs_rs[class_name]['impl'].write('\t}\n')
 		outs_rs[class_name]['impl'].write("}\n")
 
-		outs_rs[class_name]['impl'].write(f'impl Debug for {class_name} {"{"}\n')
+		outs_rs[class_name]['impl'].write(f'impl Debug for {class_name} {{\n')
 		outs_rs[class_name]['impl'].write("\tfn fmt(&self, f: &mut Formatter) -> fmt::Result {\n")
 		outs_rs[class_name]['impl'].write('\t\tif self.available {\n')
 		outs_rs[class_name]['impl'].write(f'\t\t\tf.debug_struct("{class_name}")\n')
@@ -1521,7 +1521,7 @@ def do_parse(parsefile, glxml):
 	rs_global_members = outs_rs['global']['members']
 	first_member_name = rs_global_members[0][0]
 
-	outs_rs['global']['impl'].write(f'impl {rs_global_struct_name} {"{"}\n')
+	outs_rs['global']['impl'].write(f'impl {rs_global_struct_name} {{\n')
 	outs_rs['global']['impl'].write("\tpub fn new(mut get_proc_address: impl FnMut(&'static str) -> *const c_void) -> Self {\n")
 	outs_rs['global']['impl'].write(f'\t\tlet {first_member_name} = {firstver_classname}::new(&mut get_proc_address);\n')
 	outs_rs['global']['impl'].write(f'\t\tif !{first_member_name}.available {"{"}\n')
@@ -1536,7 +1536,7 @@ def do_parse(parsefile, glxml):
 	outs_rs['global']['impl'].write('\t}\n')
 	outs_rs['global']['impl'].write('}\n\n')
 
-	outs_rs['global']['impl'].write(f'impl Default for {rs_global_struct_name} {"{"}\n')
+	outs_rs['global']['impl'].write(f'impl Default for {rs_global_struct_name} {{\n')
 	outs_rs['global']['impl'].write("\tfn default() -> Self {\n")
 	outs_rs['global']['impl'].write('\t\tSelf {\n')
 	for member in rs_global_members:
