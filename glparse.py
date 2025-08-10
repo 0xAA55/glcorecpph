@@ -1563,12 +1563,6 @@ def do_parse(parsefile, glxml):
 	outs_rs['global']['impl'].write('\t}\n')
 	outs_rs['global']['impl'].write('}\n\n')
 
-	super_trait = " +\n".join(rs_traits)
-	outs_rs['global']['impl'].write(f'pub trait GL: Debug + Clone + Copy + Sized +\n{super_trait} {"{}"}\n')
-	outs_rs['global']['impl'].write('\n')
-	outs_rs['global']['impl'].write(f'impl GL for {rs_global_struct_name} {"{}"}\n')
-	outs_rs['global']['impl'].write('\n')
-
 	outs_hpp.write('};\n')
 	outs_cpp.write('};\n')
 	outs_csharp.write('};\n')
