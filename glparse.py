@@ -615,9 +615,9 @@ def do_parse(parsefile, glxml):
 		ret = rs_argtype_conv(rettype)
 		if use_result:
 			if ret in {'void', 'c_void'}:
-				return ' -> Result<(), GLCoreError>'
+				return ' -> Result<()>'
 			else:
-				return f' -> Result<{ret}, GLCoreError>'
+				return f' -> Result<{ret}>'
 		else:
 			if ret in {'void', 'c_void'}:
 				return ''
