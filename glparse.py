@@ -438,6 +438,7 @@ def do_parse(parsefile, glxml):
 	outs_csharp.write('\t}\n')
 	outs_csharp.write('\tpublic delegate IntPtr Delegate_GetProcAddress (string ProcName);\n')
 
+	outs_rs['global']['predef'].write('\n')
 	outs_rs['global']['predef'].write('#![allow(dead_code)]\n')
 	outs_rs['global']['predef'].write('#![allow(non_snake_case)]\n')
 	outs_rs['global']['predef'].write('#![allow(non_camel_case_types)]\n')
