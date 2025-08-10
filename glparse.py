@@ -452,6 +452,7 @@ def do_parse(parsefile, glxml):
 	outs_rs['global']['predef'].write("\tptr::null,\n")
 	outs_rs['global']['predef'].write("};\n")
 	outs_rs['global']['predef'].write('\n')
+	outs_rs['global']['predef'].write('/// The OpenGL error type\n')
 	outs_rs['global']['predef'].write('#[derive(Debug, Clone, Copy)]\n')
 	outs_rs['global']['predef'].write('pub enum GLCoreError {\n')
 	outs_rs['global']['predef'].write('\tNullFunctionPointer(&\'static str),\n')
@@ -465,7 +466,10 @@ def do_parse(parsefile, glxml):
 	outs_rs['global']['predef'].write('\tUnknownError((GLenum, &\'static str)),\n')
 	outs_rs['global']['predef'].write('}\n')
 	outs_rs['global']['predef'].write('\n')
+	outs_rs['global']['predef'].write('/// The result returns from this crate. It\'s the alias of `Result<T, GLCoreError>`\n')
 	outs_rs['global']['predef'].write('pub type Result<T> = std::result::Result<T, GLCoreError>;\n')
+	outs_rs['global']['predef'].write('\n')
+	outs_rs['global']['predef'].write('/// Convert the constants returns from `glGetError()` to `Result<T>`\n')
 	outs_rs['global']['predef'].write('pub fn to_result<T>(funcname: &\'static str, ret: T, gl_error: GLenum) -> Result<T> {\n')
 	outs_rs['global']['predef'].write('\tmatch gl_error {\n')
 	outs_rs['global']['predef'].write('\t\tGL_NO_ERROR => Ok(ret),\n')
@@ -480,6 +484,7 @@ def do_parse(parsefile, glxml):
 	outs_rs['global']['predef'].write('\t}\n')
 	outs_rs['global']['predef'].write('}\n')
 	outs_rs['global']['predef'].write('\n')
+	outs_rs['global']['predef'].write('/// Translate the returned `Result<T>` from `std::panic::catch_unwind()` to our `Result<T>`\n')
 	outs_rs['global']['predef'].write('pub fn process_catch<T>(funcname: &\'static str, ret: std::thread::Result<T>) -> Result<T> {\n')
 	outs_rs['global']['predef'].write('\tmatch ret {\n')
 	outs_rs['global']['predef'].write('\t\tOk(ret) => Ok(ret),\n')
@@ -489,15 +494,31 @@ def do_parse(parsefile, glxml):
 	outs_rs['global']['predef'].write('\t}\n')
 	outs_rs['global']['predef'].write('}\n')
 	outs_rs['global']['predef'].write('\n')
+	outs_rs['global']['predef'].write('/// Alias to `f32`\n')
 	outs_rs['global']['predef'].write('pub type khronos_float_t = f32;\n')
+	outs_rs['global']['predef'].write('\n')
+	outs_rs['global']['predef'].write('/// Alias to `usize`\n')
 	outs_rs['global']['predef'].write('pub type khronos_ssize_t = usize;\n')
+	outs_rs['global']['predef'].write('\n')
+	outs_rs['global']['predef'].write('/// Alias to `usize`\n')
 	outs_rs['global']['predef'].write('pub type khronos_intptr_t = usize;\n')
+	outs_rs['global']['predef'].write('\n')
+	outs_rs['global']['predef'].write('/// Alias to `i16`\n')
 	outs_rs['global']['predef'].write('pub type khronos_int16_t = i16;\n')
+	outs_rs['global']['predef'].write('\n')
+	outs_rs['global']['predef'].write('/// Alias to `i8`\n')
 	outs_rs['global']['predef'].write('pub type khronos_int8_t = i8;\n')
+	outs_rs['global']['predef'].write('\n')
+	outs_rs['global']['predef'].write('/// Alias to `u16`\n')
 	outs_rs['global']['predef'].write('pub type khronos_uint16_t = u16;\n')
+	outs_rs['global']['predef'].write('\n')
+	outs_rs['global']['predef'].write('/// Alias to `i64`\n')
 	outs_rs['global']['predef'].write('pub type khronos_int64_t = i64;\n')
+	outs_rs['global']['predef'].write('\n')
+	outs_rs['global']['predef'].write('/// Alias to `u64`\n')
 	outs_rs['global']['predef'].write('pub type khronos_uint64_t = u64;\n')
 	outs_rs['global']['predef'].write('\n')
+	outs_rs['global']['struct'].write('/// All of the OpenGL functions\n')
 	outs_rs['global']['struct'].write(f'{rust_derive_global}\n')
 	outs_rs['global']['struct'].write(f'pub struct {rs_global_struct_name} {{\n')
 
@@ -753,15 +774,22 @@ def do_parse(parsefile, glxml):
 		}
 
 		global_member = (version_name.lower(), class_name)
+		outs_rs['global']['struct'].write(f'\t/// Functions from OpenGL version {major}.{minor}\n')
 		outs_rs['global']['struct'].write(f'\tpub {global_member[0]}: {global_member[1]},\n')
+		outs_rs['global']['struct'].write(f'\n')
 		outs_rs['global']['impl'].write(f'impl {rs_trait_name} for {rs_global_struct_name} {{\n')
 		outs_rs['global']['members'] += [global_member]
 
+		outs_rs[class_name]['struct'].write(f'\n')
+		outs_rs[class_name]['struct'].write(f'/// Functions from OpenGL version {major}.{minor}\n')
 		outs_rs[class_name]['struct'].write(f'{rust_derive}\n')
 		outs_rs[class_name]['struct'].write(f'pub struct {class_name} {{\n')
 		outs_rs[class_name]['impl'].write(f'impl {rs_trait_name} for {class_name} {{\n')
+		outs_rs[class_name]['trait'].write('\n')
+		outs_rs[class_name]['trait'].write(f'/// Functions from OpenGL version {major}.{minor}\n')
 		outs_rs[class_name]['trait'].write(f'pub trait {rs_trait_name} {{\n')
 		if last_version is not None:
+			outs_rs[class_name]['trait'].write("\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/gl4/html/glGetError.xhtml>\n")
 			outs_rs[class_name]['trait'].write('\tfn glGetError(&self) -> GLenum;\n')
 
 		for target_type, typealias in curver['typealias'].items():
@@ -771,8 +799,11 @@ def do_parse(parsefile, glxml):
 				while alias[0] == '*':
 					alias = alias[1:]
 					target_type = target_type + "*"
-				rs_target_type = rs_argtype_conv(target_type)
-				outs_rs[class_name]['predef'].write(f'pub type {alias} = {rs_type_conv(rs_target_type)};\n')
+				rs_target_type = rs_type_conv(rs_argtype_conv(target_type))
+
+				outs_rs[class_name]['predef'].write('\n')
+				outs_rs[class_name]['predef'].write(f'/// Alias to `{rs_target_type}`\n')
+				outs_rs[class_name]['predef'].write(f'pub type {alias} = {rs_target_type};\n')
 			try:
 				target_of_target = csharp_typeconv[target_type]
 			except KeyError:
@@ -893,6 +924,8 @@ def do_parse(parsefile, glxml):
 			calltype = fpdata['calltype']
 			arglist = fpdata['arglist']
 			outs_hpp.write(f'\tusing {functype} = {rettype} ({calltype}) ({arglist});\n')
+			outs_rs['global']['predef'].write('\n')
+			outs_rs['global']['predef'].write(f'/// The prototype to the OpenGL callback function `{functype}`\n')
 			outs_rs['global']['predef'].write(f'pub type {functype} = extern "system" fn({rs_arg_fp(arglist)}){rs_ret(rettype, use_result = False)};\n')
 			csharp_delecb.write(f'\t\tpublic delegate {csret(rettype)} {functype} ({csargs(arglist)});\n')
 		outs_hpp.write('\n')
@@ -955,10 +988,12 @@ def do_parse(parsefile, glxml):
 			outs_csharp.write(f'\tclass {class_name} : {l_class_name}\n')
 			outs_csharp.write('\t{\n')
 		if last_version is not None:
+			outs_rs[class_name]['impl'].write("\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/gl4/html/glGetError.xhtml>\n")
 			outs_rs[class_name]['impl'].write("\t#[inline(always)]\n")
 			outs_rs[class_name]['impl'].write(f"\tfn glGetError(&self) -> GLenum {{\n")
 			outs_rs[class_name]['impl'].write(f'\t\t(self.geterror)()\n')
 			outs_rs[class_name]['impl'].write('\t}\n')
+			outs_rs['global']['impl'].write("\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/gl4/html/glGetError.xhtml>\n")
 			outs_rs['global']['impl'].write("\t#[inline(always)]\n")
 			outs_rs['global']['impl'].write(f"\tfn glGetError(&self) -> GLenum {{\n")
 			outs_rs['global']['impl'].write(f'\t\t(self.{version_name.lower()}.geterror)()\n')
@@ -983,15 +1018,18 @@ def do_parse(parsefile, glxml):
 			else:
 				rs_ret_type = rs_ret(rettype, use_result = True)
 			if membername == 'GetError':
+				outs_rs[class_name]['impl'].write(f"\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/gl4/html/{funcn}.xhtml>\n")
 				outs_rs[class_name]['impl'].write("\t#[inline(always)]\n")
 				outs_rs[class_name]['impl'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type} {{\n")
 				outs_rs[class_name]['impl'].write(f'\t\t{rs_call_from_class}\n')
 				outs_rs[class_name]['impl'].write('\t}\n')
+				outs_rs['global']['impl'].write(f"\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/gl4/html/{funcn}.xhtml>\n")
 				outs_rs['global']['impl'].write("\t#[inline(always)]\n")
 				outs_rs['global']['impl'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type} {{\n")
 				outs_rs['global']['impl'].write(f'\t\t{rs_call_from_global}\n')
 				outs_rs['global']['impl'].write('\t}\n')
 			else:
+				outs_rs[class_name]['impl'].write(f"\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/gl4/html/{funcn}.xhtml>\n")
 				outs_rs[class_name]['impl'].write("\t#[inline(always)]\n")
 				outs_rs[class_name]['impl'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type} {{\n")
 				outs_rs[class_name]['impl'].write(f'\t\tlet ret = process_catch("{funcn}", catch_unwind(||{rs_call_from_class}));\n')
@@ -1004,6 +1042,7 @@ def do_parse(parsefile, glxml):
 				outs_rs[class_name]['impl'].write(f'\t\t#[cfg(not(feature = "diagnose"))]\n')
 				outs_rs[class_name]['impl'].write('\t\treturn ret;\n')
 				outs_rs[class_name]['impl'].write('\t}\n')
+				outs_rs['global']['impl'].write(f"\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/gl4/html/{funcn}.xhtml>\n")
 				outs_rs['global']['impl'].write("\t#[inline(always)]\n")
 				outs_rs['global']['impl'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type} {{\n")
 				outs_rs['global']['impl'].write(f'\t\tlet ret = process_catch("{funcn}", catch_unwind(||{rs_call_from_global}));\n')
@@ -1016,6 +1055,8 @@ def do_parse(parsefile, glxml):
 				outs_rs['global']['impl'].write(f'\t\t#[cfg(not(feature = "diagnose"))]\n')
 				outs_rs['global']['impl'].write('\t\treturn ret;\n')
 				outs_rs['global']['impl'].write('\t}\n')
+			outs_rs[class_name]['trait'].write("\n")
+			outs_rs[class_name]['trait'].write(f"\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/gl4/html/{funcn}.xhtml>\n")
 			outs_rs[class_name]['trait'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type};\n")
 			if rettype == 'void':
 				outs_cpp.write('{ NullFuncPtr(); }\n')
@@ -1118,6 +1159,8 @@ def do_parse(parsefile, glxml):
 			pproto = type2proto[functype]
 			proto = pproto[len(prefix):]
 			outs_hpp.write(f'\t\tusing {functype} = {rettype} ({calltype}) ({arglist});\n')
+			outs_rs[class_name]['predef'].write('\n')
+			outs_rs[class_name]['predef'].write(f'/// The prototype to the OpenGL function `{proto}`\n')
 			outs_rs[class_name]['predef'].write(f'type {functype} = extern "system" fn({rs_arg_fp(arglist)}){rs_ret(rettype, use_result = False)};\n')
 			args = [arg.strip() for arg in arglist.split(',')]
 			#if proto.startswith('Gen') and proto.endswith('s') and len(args) == 2 and args[0].endswith((' n', ' count')) and args[1].count('*') == 1 and 'const' not in args[1] and rettype == 'void':
@@ -1252,14 +1295,18 @@ def do_parse(parsefile, glxml):
 			outs_rs[class_name]['impl'].write('\t}\n')
 		elif 'SHADING_LANGUAGE_VERSION' in curver['define'].keys():
 			outs_hpp.write('\t\tstd::string ShadingLanguageVersion;\n')
+			outs_rs[class_name]['struct'].write('\t/// The version of the OpenGL shading language\n')
 			outs_rs[class_name]['struct'].write("\tshading_language_version: &'static str,\n")
+			outs_rs[class_name]['struct'].write('\n')
 			csharp_utilities.write('\t\tpublic readonly string ShadingLanguageVersion;\n')
 		outs_hpp.write('\n')
 		outs_hpp.write('\tprivate:\n')
 		outs_hpp.write('\t\tbool Available;\n')
 		outs_hpp.write('\n')
 		outs_hpp.write('\tpublic:\n')
+		outs_rs[class_name]['struct'].write(f'\t/// Is OpenGL version {major}.{minor} available\n')
 		outs_rs[class_name]['struct'].write("\tavailable: bool,\n")
+		outs_rs[class_name]['struct'].write('\n')
 		outs_rs[class_name]['impl'].write("\t#[inline(always)]\n")
 		outs_rs[class_name]['impl'].write("\tpub fn get_available(&self) -> bool {\n")
 		outs_rs[class_name]['impl'].write(f'\t\tself.available\n')
@@ -1285,7 +1332,8 @@ def do_parse(parsefile, glxml):
 			outs_hpp.write('\t\tinline std::string GetRenderer() { return Renderer; }\n')
 			outs_hpp.write('\t\tinline std::string GetVersion() { return Version; }\n')
 		else:
-			outs_rs[class_name]['struct'].write("\tgeterror: PFNGLGETERRORPROC,\n")
+			outs_rs[class_name]['struct'].write('\t/// The function pointer to `glGetError()`\n')
+			outs_rs[class_name]['struct'].write("\tpub geterror: PFNGLGETERRORPROC,\n")
 
 		csharp_utilities.write('\t\tprivate readonly bool Available;\n')
 
@@ -1303,6 +1351,8 @@ def do_parse(parsefile, glxml):
 			arglist = fpdata['arglist']
 			pproto = type2proto[functype]
 			proto = pproto[len(prefix):]
+			outs_rs[class_name]['predef'].write('\n')
+			outs_rs[class_name]['predef'].write(f'/// The dummy function of `{proto}()`\n')
 			outs_rs[class_name]['predef'].write(f'extern "system" fn dummy_{functype.lower()} ({rs_arg(arglist, emit_argn = True, with_self = False)}){rs_ret(rettype, use_result = False)} {{\n')
 			outs_rs[class_name]['predef'].write(f'\tpanic!("OpenGL function pointer `{pproto}()` is null.")\n')
 			outs_rs[class_name]['predef'].write('}\n')
@@ -1320,7 +1370,9 @@ def do_parse(parsefile, glxml):
 			else:
 				deft = enumtype[f'{PREFIX_}{defn}']
 			outs_hpp.write(f'\t\tstatic constexpr {deft} {defn} = {defv};\n')
+			outs_rs[class_name]['predef'].write(f'/// Constant value defined from OpenGL {major}.{minor}\n')
 			outs_rs[class_name]['predef'].write(f"pub const GL_{defn}: {deft} = {rs_const_value(defv)};\n")
+			outs_rs[class_name]['predef'].write('\n')
 			if deft == 'GLuint64':
 				csdefv = defv.replace('ull', 'ul')
 			elif deft == 'GLint64':
@@ -1337,7 +1389,9 @@ def do_parse(parsefile, glxml):
 			functype = f'PFN{funcn.upper()}PROC'
 			membername = funcn[len(prefix):]
 			outs_hpp.write(f'\t\t{functype} {membername};\n')
-			outs_rs[class_name]['struct'].write(f"\t{membername.lower()}: {functype},\n")
+			outs_rs[class_name]['struct'].write('\n')
+			outs_rs[class_name]['struct'].write(f'\t/// The function pointer to `{funcn}()`\n')
+			outs_rs[class_name]['struct'].write(f"\tpub {membername.lower()}: {functype},\n")
 
 			func2load[membername] = funcn
 
