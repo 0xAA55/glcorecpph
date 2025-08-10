@@ -449,14 +449,14 @@ def do_parse(parsefile, glxml):
 	outs_rs['global']['predef'].write("\tfmt::{self, Debug, Formatter},\n")
 	outs_rs['global']['predef'].write("\tptr::null,\n")
 	outs_rs['global']['predef'].write("};\n")
-	outs_rs['global']['predef'].write('type khronos_float_t = f32;\n')
-	outs_rs['global']['predef'].write('type khronos_ssize_t = usize;\n')
-	outs_rs['global']['predef'].write('type khronos_intptr_t = usize;\n')
-	outs_rs['global']['predef'].write('type khronos_int16_t = i16;\n')
-	outs_rs['global']['predef'].write('type khronos_int8_t = i8;\n')
-	outs_rs['global']['predef'].write('type khronos_uint16_t = u16;\n')
-	outs_rs['global']['predef'].write('type khronos_int64_t = i64;\n')
-	outs_rs['global']['predef'].write('type khronos_uint64_t = u64;\n')
+	outs_rs['global']['predef'].write('pub type khronos_float_t = f32;\n')
+	outs_rs['global']['predef'].write('pub type khronos_ssize_t = usize;\n')
+	outs_rs['global']['predef'].write('pub type khronos_intptr_t = usize;\n')
+	outs_rs['global']['predef'].write('pub type khronos_int16_t = i16;\n')
+	outs_rs['global']['predef'].write('pub type khronos_int8_t = i8;\n')
+	outs_rs['global']['predef'].write('pub type khronos_uint16_t = u16;\n')
+	outs_rs['global']['predef'].write('pub type khronos_int64_t = i64;\n')
+	outs_rs['global']['predef'].write('pub type khronos_uint64_t = u64;\n')
 	outs_rs['global']['struct'].write(f'{rust_derive_global}\n')
 	outs_rs['global']['struct'].write(f'pub struct {rs_global_struct_name} {"{"}\n')
 
@@ -722,7 +722,7 @@ def do_parse(parsefile, glxml):
 					alias = alias[1:]
 					target_type = target_type + "*"
 				rs_target_type = rs_argtype_conv(target_type)
-				outs_rs[class_name]['predef'].write(f'type {alias} = {rs_type_conv(rs_target_type)};\n')
+				outs_rs[class_name]['predef'].write(f'pub type {alias} = {rs_type_conv(rs_target_type)};\n')
 			try:
 				target_of_target = csharp_typeconv[target_type]
 			except KeyError:
