@@ -611,12 +611,19 @@ def do_parse(parsefile, glxml):
 		retarg = ', '.join(retarg)
 		return retarg
 
-	def rs_ret(rettype):
+	def rs_ret(rettype, use_result = True):
 		ret = rs_argtype_conv(rettype)
-		if ret in {'void', 'c_void'}:
-			return '';
+		if use_result:
+			if ret in {'void', 'c_void'}:
+				return ' -> Result<(), GLCoreError>'
+			else:
+				return f' -> Result<{ret}, GLCoreError>'
 		else:
-			return f' -> {ret}'
+			if ret in {'void', 'c_void'}:
+				return ''
+			else:
+				return f' -> {ret}'
+
 
 	def rs_const_value(number):
 		if number.endswith('ull'):
