@@ -881,7 +881,7 @@ def do_parse(parsefile, glxml):
 			calltype = fpdata['calltype']
 			arglist = fpdata['arglist']
 			outs_hpp.write(f'\tusing {functype} = {rettype} ({calltype}) ({arglist});\n')
-			outs_rs['global']['predef'].write(f'pub type {functype} = extern "system" fn({rs_arg_fp(arglist)}){rs_ret(rettype)};\n')
+			outs_rs['global']['predef'].write(f'pub type {functype} = extern "system" fn({rs_arg_fp(arglist)}){rs_ret(rettype, use_result = False)};\n')
 			csharp_delecb.write(f'\t\tpublic delegate {csret(rettype)} {functype} ({csargs(arglist)});\n')
 		outs_hpp.write('\n')
 
