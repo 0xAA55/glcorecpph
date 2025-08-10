@@ -751,6 +751,8 @@ def do_parse(parsefile, glxml):
 		outs_rs[class_name]['struct'].write(f'pub struct {class_name} {{\n')
 		outs_rs[class_name]['impl'].write(f'impl {rs_trait_name} for {class_name} {{\n')
 		outs_rs[class_name]['trait'].write(f'pub trait {rs_trait_name} {{\n')
+		if last_version is not None:
+			outs_rs[class_name]['trait'].write('\tfn glGetError(&self) -> GLenum;\n')
 
 		for target_type, typealias in curver['typealias'].items():
 			outs_hpp.write(f'\ttypedef {target_type} {", ".join(typealias)};\n')
@@ -942,6 +944,15 @@ def do_parse(parsefile, glxml):
 			outs_hpp.write(f'\tclass {class_name} : public {l_class_name}\n')
 			outs_csharp.write(f'\tclass {class_name} : {l_class_name}\n')
 			outs_csharp.write('\t{\n')
+		if last_version is not None:
+			outs_rs[class_name]['impl'].write("\t#[inline(always)]\n")
+			outs_rs[class_name]['impl'].write(f"\tfn glGetError(&self) -> GLenum {{\n")
+			outs_rs[class_name]['impl'].write(f'\t\t(self.geterror)()\n')
+			outs_rs[class_name]['impl'].write('\t}\n')
+			outs_rs['global']['impl'].write("\t#[inline(always)]\n")
+			outs_rs['global']['impl'].write(f"\tfn glGetError(&self) -> GLenum {{\n")
+			outs_rs['global']['impl'].write(f'\t\t(self.{version_name.lower()}.geterror)()\n')
+			outs_rs['global']['impl'].write('\t}\n')
 		for funcn, funcproto in curver['funcproto'].items():
 			rettype = funcproto['ret']
 			calltype = funcproto['calltype']
@@ -1040,6 +1051,8 @@ def do_parse(parsefile, glxml):
 			outs_rs[class_name]['impl'].write("\t\t}\n")
 			outs_rs[class_name]['impl'].write("\t\tSelf {\n")
 			outs_rs[class_name]['impl'].write("\t\t\tavailable: true,\n")
+		if last_version is not None:
+			outs_rs[class_name]['impl'].write('\t\t\tgeterror: {let proc = get_proc_address("glGetError"); if proc == null() {dummy_pfnglgeterrorproc} else {unsafe{transmute(proc)}}},\n')
 		for funcn, funcproto in curver['funcproto'].items():
 			membername = funcn[len(prefix):]
 			functype = f'PFN{funcn.upper()}PROC'
@@ -1229,6 +1242,8 @@ def do_parse(parsefile, glxml):
 			outs_hpp.write('\t\tinline std::string GetVendor() { return Vendor; }\n')
 			outs_hpp.write('\t\tinline std::string GetRenderer() { return Renderer; }\n')
 			outs_hpp.write('\t\tinline std::string GetVersion() { return Version; }\n')
+		else:
+			outs_rs[class_name]['struct'].write("\tgeterror: PFNGLGETERRORPROC,\n")
 
 		csharp_utilities.write('\t\tprivate readonly bool Available;\n')
 
@@ -1439,6 +1454,8 @@ def do_parse(parsefile, glxml):
 			l_class_name = _style_change(last_version)
 			outs_rs[class_name]['impl'].write("\t\tSelf {\n")
 			outs_rs[class_name]['impl'].write("\t\t\tavailable: false,\n")
+		if last_version is not None:
+			outs_rs[class_name]['impl'].write(f'\t\t\tgeterror: dummy_pfnglgeterrorproc,\n')
 		for funcn, funcproto in curver['funcproto'].items():
 			membername = funcn[len(prefix):]
 			functype = f'PFN{funcn.upper()}PROC'
