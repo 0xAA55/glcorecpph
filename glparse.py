@@ -467,7 +467,7 @@ def do_parse(parsefile, glxml):
 	outs_rs['global']['predef'].write('}\n')
 	outs_rs['global']['predef'].write('\n')
 	outs_rs['global']['predef'].write('/// The result returns from this crate. It\'s the alias of `Result<T, GLCoreError>`\n')
-	outs_rs['global']['predef'].write('pub type Result<T> = std::result::Result<T, GLCoreError>;\n')
+	outs_rs['global']['predef'].write('type Result<T> = std::result::Result<T, GLCoreError>;\n')
 	outs_rs['global']['predef'].write('\n')
 	outs_rs['global']['predef'].write('/// Convert the constants returns from `glGetError()` to `Result<T>`\n')
 	outs_rs['global']['predef'].write('pub fn to_result<T>(funcname: &\'static str, ret: T, gl_error: GLenum) -> Result<T> {\n')
