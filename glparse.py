@@ -1085,7 +1085,7 @@ def do_parse(parsefile, glxml):
 			outs_rs[class_name]['impl'].write('\t\tOk(ret)\n')
 		else:
 			if 'SHADING_LANGUAGE_VERSION' in curver['define'].keys():
-				outs_rs[class_name]['impl'].write('\t\t\tshading_language_version: base.glGetString(GL_SHADING_LANGUAGE_VERSION),\n')
+				outs_rs[class_name]['impl'].write('\t\t\tshading_language_version: base.glGetString(GL_SHADING_LANGUAGE_VERSION).unwrap(),\n')
 			outs_rs[class_name]['impl'].write('\t\t}\n')
 		outs_rs[class_name]['impl'].write('\t}\n')
 
