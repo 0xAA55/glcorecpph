@@ -960,21 +960,43 @@ def do_parse(parsefile, glxml):
 			membername = funcn[len(prefix):]
 			outs_cpp.write(f'\tstatic {rettype} {calltype} Null_{funcn} ({arglist})')
 
-			rs_ret_type = rs_ret(rettype)
+			rs_ret_type = rs_ret(rettype, use_result = False)
 			rs_call_from_class = f'(self.{membername.lower()})({rs_call_arg(arglist)})'
 			rs_call_from_global = f'(self.{version_name.lower()}.{membername.lower()})({rs_call_arg(arglist)})'
 			if "*const GLubyte" in rs_ret_type:
-				rs_ret_type = " -> &'static str"
+				rs_ret_type = " -> Result<&'static str>"
 				rs_call_from_class = "unsafe{CStr::from_ptr(" + rs_call_from_class + " as *const i8)}.to_str().unwrap()"
 				rs_call_from_global = "unsafe{CStr::from_ptr(" + rs_call_from_global + " as *const i8)}.to_str().unwrap()"
-			outs_rs[class_name]['impl'].write("\t#[inline(always)]\n")
-			outs_rs[class_name]['impl'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type} {'{'}\n")
-			outs_rs[class_name]['impl'].write(f'\t\t{rs_call_from_class}\n')
-			outs_rs[class_name]['impl'].write('\t}\n')
-			outs_rs['global']['impl'].write("\t#[inline(always)]\n")
-			outs_rs['global']['impl'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type} {'{'}\n")
-			outs_rs['global']['impl'].write(f'\t\t{rs_call_from_global}\n')
-			outs_rs['global']['impl'].write('\t}\n')
+			elif membername == 'GetError':
+				rs_ret_type = " -> GLenum"
+			else:
+				rs_ret_type = rs_ret(rettype, use_result = True)
+			if membername == 'GetError':
+				outs_rs[class_name]['impl'].write("\t#[inline(always)]\n")
+				outs_rs[class_name]['impl'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type} {{\n")
+				outs_rs[class_name]['impl'].write(f'\t\t{rs_call_from_class}\n')
+				outs_rs[class_name]['impl'].write('\t}\n')
+				outs_rs['global']['impl'].write("\t#[inline(always)]\n")
+				outs_rs['global']['impl'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type} {{\n")
+				outs_rs['global']['impl'].write(f'\t\t{rs_call_from_global}\n')
+				outs_rs['global']['impl'].write('\t}\n')
+			else:
+				outs_rs[class_name]['impl'].write("\t#[inline(always)]\n")
+				outs_rs[class_name]['impl'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type} {{\n")
+				outs_rs[class_name]['impl'].write(f'\t\tlet ret = {rs_call_from_class};\n')
+				outs_rs[class_name]['impl'].write(f'\t\t#[cfg(feature = "diagnose")]\n')
+				outs_rs[class_name]['impl'].write(f'\t\treturn to_result("{funcn}", ret, self.glGetError());\n')
+				outs_rs[class_name]['impl'].write(f'\t\t#[cfg(not(feature = "diagnose"))]\n')
+				outs_rs[class_name]['impl'].write('\t\treturn Ok(ret);\n')
+				outs_rs[class_name]['impl'].write('\t}\n')
+				outs_rs['global']['impl'].write("\t#[inline(always)]\n")
+				outs_rs['global']['impl'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type} {{\n")
+				outs_rs['global']['impl'].write(f'\t\tlet ret = {rs_call_from_global};\n')
+				outs_rs['global']['impl'].write(f'\t\t#[cfg(feature = "diagnose")]\n')
+				outs_rs['global']['impl'].write(f'\t\treturn to_result("{funcn}", ret, (self.{version_name.lower()}.geterror)());\n')
+				outs_rs['global']['impl'].write(f'\t\t#[cfg(not(feature = "diagnose"))]\n')
+				outs_rs['global']['impl'].write('\t\treturn Ok(ret);\n')
+				outs_rs['global']['impl'].write('\t}\n')
 			outs_rs[class_name]['trait'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type};\n")
 			if rettype == 'void':
 				outs_cpp.write('{ NullFuncPtr(); }\n')
