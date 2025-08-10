@@ -958,6 +958,7 @@ def do_parse(parsefile, glxml):
 			calltype = funcproto['calltype']
 			arglist = funcproto['arglist']
 			membername = funcn[len(prefix):]
+			functype = f'PFN{funcn.upper()}PROC'
 			outs_cpp.write(f'\tstatic {rettype} {calltype} Null_{funcn} ({arglist})')
 
 			rs_ret_type = rs_ret(rettype, use_result = False)
@@ -983,6 +984,10 @@ def do_parse(parsefile, glxml):
 			else:
 				outs_rs[class_name]['impl'].write("\t#[inline(always)]\n")
 				outs_rs[class_name]['impl'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type} {{\n")
+				outs_rs[class_name]['impl'].write(f'\t\t#[cfg(feature = "validate_pointers")]\n')
+				outs_rs[class_name]['impl'].write(f'\t\tif self.{membername.lower()} == dummy_{functype.lower()} {{\n')
+				outs_rs[class_name]['impl'].write(f'\t\t\treturn Err(GLCoreError::NullFunctionPointer("{funcn}"));\n')
+				outs_rs[class_name]['impl'].write('\t\t}\n')
 				outs_rs[class_name]['impl'].write(f'\t\tlet ret = {rs_call_from_class};\n')
 				outs_rs[class_name]['impl'].write(f'\t\t#[cfg(feature = "diagnose")]\n')
 				outs_rs[class_name]['impl'].write(f'\t\treturn to_result("{funcn}", ret, self.glGetError());\n')
@@ -991,6 +996,10 @@ def do_parse(parsefile, glxml):
 				outs_rs[class_name]['impl'].write('\t}\n')
 				outs_rs['global']['impl'].write("\t#[inline(always)]\n")
 				outs_rs['global']['impl'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type} {{\n")
+				outs_rs['global']['impl'].write(f'\t\t#[cfg(feature = "validate_pointers")]\n')
+				outs_rs['global']['impl'].write(f'\t\tif self.{version_name.lower()}.{membername.lower()} == dummy_{functype.lower()} {{\n')
+				outs_rs['global']['impl'].write(f'\t\t\treturn Err(GLCoreError::NullFunctionPointer("{funcn}"));\n')
+				outs_rs['global']['impl'].write('\t\t}\n')
 				outs_rs['global']['impl'].write(f'\t\tlet ret = {rs_call_from_global};\n')
 				outs_rs['global']['impl'].write(f'\t\t#[cfg(feature = "diagnose")]\n')
 				outs_rs['global']['impl'].write(f'\t\treturn to_result("{funcn}", ret, (self.{version_name.lower()}.geterror)());\n')
@@ -1078,7 +1087,7 @@ def do_parse(parsefile, glxml):
 		for funcn, funcproto in curver['funcproto'].items():
 			membername = funcn[len(prefix):]
 			functype = f'PFN{funcn.upper()}PROC'
-			outs_rs[class_name]['impl'].write(f'\t\t\t{membername.lower()}: ' + '{let proc = get_proc_address("' + funcn + '"); if proc == null() {dummy_' + functype.lower() + '} else {unsafe{transmute(proc)}}},\n')
+			outs_rs[class_name]['impl'].write(f'\t\t\t{membername.lower()}: {{let proc = get_proc_address("{funcn}"); if proc == null() {{dummy_{functype.lower()}}} else {{unsafe{{transmute(proc)}}}}}},\n')
 		if last_version is None:
 			outs_rs[class_name]['impl'].write('\t\t};\n')
 			outs_rs[class_name]['impl'].write('\t\tret.fetch_version()?;\n')
