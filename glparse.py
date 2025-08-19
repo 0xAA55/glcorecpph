@@ -534,7 +534,7 @@ def do_parse(parsefiles, glxml):
 	outs_rs['global']['predef'].write('/// Alias to `u64`\n')
 	outs_rs['global']['predef'].write('pub type khronos_uint64_t = u64;\n')
 	outs_rs['global']['predef'].write('\n')
-	outs_rs['global']['struct'].write(f'/// All of the {OpenGL} functions\n')
+	outs_rs['global']['struct'].write(f'/// All of the OpenGL and OpenGL ES functions\n')
 	outs_rs['global']['struct'].write(f'{rust_derive_global}\n')
 	outs_rs['global']['struct'].write(f'pub struct {rs_global_struct_name} {{\n')
 
