@@ -727,6 +727,7 @@ def do_parse(parsefiles, glxml):
 			ident = ident.replace(f'_{a}', a.upper())
 		ident = ident.replace('_', '')
 		ident = f'{ident[0].upper()}{ident[1:]}'
+		if ident.startswith('Esv'): ident = f'EsV{ident[len("Esv"):]}'
 		return ident
 
 	def _on_version(x):
