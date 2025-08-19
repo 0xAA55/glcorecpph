@@ -814,6 +814,7 @@ def do_parse(parsefiles, glxml):
 		outs_rs['global']['struct'].write(f'\tpub {global_member[0]}: {global_member[1]},\n')
 		outs_rs['global']['struct'].write(f'\n')
 		outs_rs['global']['impl'].write(f'impl {rs_trait_name}_g for {rs_global_struct_name} {{\n')
+		outs_rs['global']['trait'].write(f'\t/// Functions from {OpenGL} version {major}.{minor} for the struct `GLCore` without dupliacted functions.\n')
 		outs_rs['global']['trait'].write(f'pub trait {rs_trait_name}_g {{\n')
 		outs_rs['global']['members'] += [global_member]
 
@@ -1395,6 +1396,7 @@ def do_parse(parsefiles, glxml):
 			outs_hpp.write('\t\tinline std::string GetVersion() { return Version; }\n')
 		elif not is_first_es_ver:
 			outs_rs[class_name]['struct'].write('\t/// The function pointer to `glGetError()`\n')
+			outs_rs[class_name]['struct'].write(f"\t/// * Reference: <https://registry.khronos.org/OpenGL-Refpages/{refver}/html/glGetError.xhtml>\n")
 			outs_rs[class_name]['struct'].write("\tpub geterror: PFNGLGETERRORPROC,\n")
 
 		csharp_utilities.write('\t\tprivate readonly bool Available;\n')
@@ -1453,6 +1455,7 @@ def do_parse(parsefiles, glxml):
 			outs_hpp.write(f'\t\t{functype} {membername};\n')
 			outs_rs[class_name]['struct'].write('\n')
 			outs_rs[class_name]['struct'].write(f'\t/// The function pointer to `{funcn}()`\n')
+			outs_rs[class_name]['struct'].write(f"\t/// * Reference: <https://registry.khronos.org/OpenGL-Refpages/{refver}/html/{funcn}.xhtml>\n")
 			outs_rs[class_name]['struct'].write(f"\tpub {membername.lower()}: {functype},\n")
 
 			func2load[membername] = funcn
