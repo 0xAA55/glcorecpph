@@ -1048,6 +1048,9 @@ def do_parse(parsefiles, glxml):
 				rs_ret_type = " -> GLenum"
 			else:
 				rs_ret_type = rs_ret(rettype, use_result = True)
+			outs_rs[class_name]['trait'].write("\n")
+			outs_rs[class_name]['trait'].write(f"\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/{refver}/html/{funcn}.xhtml>\n")
+			outs_rs[class_name]['trait'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type};\n")
 			if membername == 'GetError':
 				outs_rs[class_name]['impl'].write(f"\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/{refver}/html/{funcn}.xhtml>\n")
 				outs_rs[class_name]['impl'].write("\t#[inline(always)]\n")
