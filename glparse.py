@@ -794,7 +794,7 @@ def do_parse(parsefiles, glxml):
 		if version_name.startswith('ES_'):
 			version_name = f'ES{version_name[len("ES_"):]}'
 			OpenGL = 'OpenGL ES'
-			refver = 'es3.0'
+			refver = 'es3'
 		try:
 			major, minor, release = version_name.split('_')[1:]
 		except ValueError:
