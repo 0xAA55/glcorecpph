@@ -821,8 +821,8 @@ def do_parse(parsefiles, glxml):
 		outs_rs[class_name]['trait'].write('\n')
 		outs_rs[class_name]['trait'].write(f'/// Functions from {OpenGL} version {major}.{minor}\n')
 		outs_rs[class_name]['trait'].write(f'pub trait {rs_trait_name} {{\n')
-		if last_version is not None:
-			outs_rs[class_name]['trait'].write("\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/gl4/html/glGetError.xhtml>\n")
+		if not is_first_ver and version_name != 'ESVERSION_2_0':
+			outs_rs[class_name]['trait'].write(f"\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/{refver}/html/glGetError.xhtml>\n")
 			outs_rs[class_name]['trait'].write('\tfn glGetError(&self) -> GLenum;\n')
 
 		for target_type, typealias in curver['typealias'].items():
@@ -964,7 +964,7 @@ def do_parse(parsefiles, glxml):
 		outs_hpp.write('\n')
 
 		l_class_name = None
-		if last_version is None:
+		if is_first_ver:
 			firstver_name = version_name
 			firstver_classname = class_name
 			outs_hpp.write(f'\tclass {class_name}\n')
@@ -1020,13 +1020,13 @@ def do_parse(parsefiles, glxml):
 			outs_hpp.write(f'\tclass {class_name} : public {l_class_name}\n')
 			outs_csharp.write(f'\tclass {class_name} : {l_class_name}\n')
 			outs_csharp.write('\t{\n')
-		if last_version is not None:
-			outs_rs[class_name]['impl'].write("\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/gl4/html/glGetError.xhtml>\n")
+		if not is_first_ver and not is_first_es_ver:
+			outs_rs[class_name]['impl'].write(f"\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/{refver}/html/glGetError.xhtml>\n")
 			outs_rs[class_name]['impl'].write("\t#[inline(always)]\n")
 			outs_rs[class_name]['impl'].write(f"\tfn glGetError(&self) -> GLenum {{\n")
 			outs_rs[class_name]['impl'].write(f'\t\t(self.geterror)()\n')
 			outs_rs[class_name]['impl'].write('\t}\n')
-			outs_rs['global']['impl'].write("\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/gl4/html/glGetError.xhtml>\n")
+			outs_rs['global']['impl'].write(f"\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/{refver}/html/glGetError.xhtml>\n")
 			outs_rs['global']['impl'].write("\t#[inline(always)]\n")
 			outs_rs['global']['impl'].write(f"\tfn glGetError(&self) -> GLenum {{\n")
 			outs_rs['global']['impl'].write(f'\t\t(self.{version_name.lower()}.geterror)()\n')
@@ -1051,18 +1051,18 @@ def do_parse(parsefiles, glxml):
 			else:
 				rs_ret_type = rs_ret(rettype, use_result = True)
 			if membername == 'GetError':
-				outs_rs[class_name]['impl'].write(f"\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/gl4/html/{funcn}.xhtml>\n")
+				outs_rs[class_name]['impl'].write(f"\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/{refver}/html/{funcn}.xhtml>\n")
 				outs_rs[class_name]['impl'].write("\t#[inline(always)]\n")
 				outs_rs[class_name]['impl'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type} {{\n")
 				outs_rs[class_name]['impl'].write(f'\t\t{rs_call_from_class}\n')
 				outs_rs[class_name]['impl'].write('\t}\n')
-				outs_rs['global']['impl'].write(f"\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/gl4/html/{funcn}.xhtml>\n")
+				outs_rs['global']['impl'].write(f"\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/{refver}/html/{funcn}.xhtml>\n")
 				outs_rs['global']['impl'].write("\t#[inline(always)]\n")
 				outs_rs['global']['impl'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type} {{\n")
 				outs_rs['global']['impl'].write(f'\t\t{rs_call_from_global}\n')
 				outs_rs['global']['impl'].write('\t}\n')
 			else:
-				outs_rs[class_name]['impl'].write(f"\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/gl4/html/{funcn}.xhtml>\n")
+				outs_rs[class_name]['impl'].write(f"\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/{refver}/html/{funcn}.xhtml>\n")
 				outs_rs[class_name]['impl'].write("\t#[inline(always)]\n")
 				outs_rs[class_name]['impl'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type} {{\n")
 				outs_rs[class_name]['impl'].write(f'\t\tlet ret = process_catch("{funcn}", catch_unwind(||{rs_call_from_class}));\n')
@@ -1075,7 +1075,7 @@ def do_parse(parsefiles, glxml):
 				outs_rs[class_name]['impl'].write(f'\t\t#[cfg(not(feature = "diagnose"))]\n')
 				outs_rs[class_name]['impl'].write('\t\treturn ret;\n')
 				outs_rs[class_name]['impl'].write('\t}\n')
-				outs_rs['global']['impl'].write(f"\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/gl4/html/{funcn}.xhtml>\n")
+				outs_rs['global']['impl'].write(f"\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/{refver}/html/{funcn}.xhtml>\n")
 				outs_rs['global']['impl'].write("\t#[inline(always)]\n")
 				outs_rs['global']['impl'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type} {{\n")
 				outs_rs['global']['impl'].write(f'\t\tlet ret = process_catch("{funcn}", catch_unwind(||{rs_call_from_global}));\n')
@@ -1089,13 +1089,13 @@ def do_parse(parsefiles, glxml):
 				outs_rs['global']['impl'].write('\t\treturn ret;\n')
 				outs_rs['global']['impl'].write('\t}\n')
 			outs_rs[class_name]['trait'].write("\n")
-			outs_rs[class_name]['trait'].write(f"\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/gl4/html/{funcn}.xhtml>\n")
+			outs_rs[class_name]['trait'].write(f"\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/{refver}/html/{funcn}.xhtml>\n")
 			outs_rs[class_name]['trait'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type};\n")
 			if rettype == 'void':
 				outs_cpp.write('{ NullFuncPtr(); }\n')
 			else:
 				outs_cpp.write('{ NullFuncPtr(); return 0; }\n')
-		if last_version is None:
+		if is_first_ver:
 			outs_rs[class_name]['impl'].write("\t#[inline(always)]\n")
 			outs_rs[class_name]['impl'].write("\tfn get_version(&self) -> (&'static str, u32, u32, u32) {\n")
 			outs_rs[class_name]['impl'].write("\t\t(self.spec, self.major_version, self.minor_version, self.release_version)\n")
@@ -1142,7 +1142,7 @@ def do_parse(parsefiles, glxml):
 		outs_rs[class_name]['impl'].write("}\n\n")
 		outs_rs['global']['impl'].write('}\n\n')
 		outs_rs[class_name]['impl'].write(f"impl {class_name} {{\n")
-		if last_version is None:
+		if is_first_ver:
 			outs_rs[class_name]['impl'].write("\tpub fn new(mut get_proc_address: impl FnMut(&'static str) -> *const c_void) -> Result<Self> {\n")
 			outs_rs[class_name]['impl'].write("\t\tlet mut ret = Self {\n")
 			outs_rs[class_name]['impl'].write("\t\t\tavailable: true,\n")
@@ -1166,13 +1166,13 @@ def do_parse(parsefiles, glxml):
 			outs_rs[class_name]['impl'].write("\t\t}\n")
 			outs_rs[class_name]['impl'].write("\t\tSelf {\n")
 			outs_rs[class_name]['impl'].write("\t\t\tavailable: true,\n")
-		if last_version is not None:
+		if not is_first_ver and not is_first_es_ver:
 			outs_rs[class_name]['impl'].write('\t\t\tgeterror: {let proc = get_proc_address("glGetError"); if proc == null() {dummy_pfnglgeterrorproc} else {unsafe{transmute(proc)}}},\n')
 		for funcn, funcproto in curver['funcproto'].items():
 			membername = funcn[len(prefix):]
 			functype = f'PFN{funcn.upper()}PROC'
 			outs_rs[class_name]['impl'].write(f'\t\t\t{membername.lower()}: {{let proc = get_proc_address("{funcn}"); if proc == null() {{dummy_{functype.lower()}}} else {{unsafe{{transmute(proc)}}}}}},\n')
-		if last_version is None:
+		if is_first_ver:
 			outs_rs[class_name]['impl'].write('\t\t};\n')
 			outs_rs[class_name]['impl'].write('\t\tret.fetch_version()?;\n')
 			outs_rs[class_name]['impl'].write('\t\tOk(ret)\n')
@@ -1228,7 +1228,7 @@ def do_parse(parsefiles, glxml):
 					add_csharp_overload_functions(proto, rettype, multiname, csarg_o_list)
 					add_csharp_overload_functions(proto, rettype, unmanname, csarg_o_unman)
 					add_csharp_overload_functions(proto, rettype, unsafename, csarg_o_unsafe, unsafe=True)
-					if last_version is not None:
+					if not is_first_ver:
 						csharp_func2load[singlename] = singletype, pproto
 						csharp_func2load[multiname] = multitype, pproto
 						csharp_func2load[unmanname] = unmantype, pproto
@@ -1262,7 +1262,7 @@ def do_parse(parsefiles, glxml):
 					csharp_deledef.write(f'\t\tpublic readonly {unsafetype} {unsafename};\n')
 					add_csharp_overload_functions(proto, rettype, safename, csarg_o_safe)
 					add_csharp_overload_functions(proto, rettype, unsafename, csarg_o_unsafe, unsafe=True)
-					if last_version is not None:
+					if not is_first_ver:
 						if csarg_safe != csarg_unman:
 							csharp_func2load[unmanname] = unmantype, pproto
 						csharp_func2load[safename] = safetype, pproto
@@ -1276,7 +1276,7 @@ def do_parse(parsefiles, glxml):
 				csharp_deletype.write(f'\t\tpublic delegate {csret(rettype)} {functype} ({csargs(arglist)});\n')
 				csharp_deledef.write(f'\t\tpublic readonly {functype} {proto};\n')
 				csharp_func2load[proto] = functype, pproto
-		if last_version is None:
+		if is_first_ver:
 			outs_hpp.write('\t\tFunc_GetProcAddress GetProcAddress;\n')
 			outs_hpp.write('\t\tint Ver_Major;\n')
 			outs_hpp.write('\t\tint Ver_Minor;\n')
@@ -1344,7 +1344,7 @@ def do_parse(parsefiles, glxml):
 		outs_rs[class_name]['impl'].write("\tpub fn get_available(&self) -> bool {\n")
 		outs_rs[class_name]['impl'].write(f'\t\tself.available\n')
 		outs_rs[class_name]['impl'].write('\t}\n')
-		if last_version is None:
+		if is_first_ver:
 			outs_hpp.write('\t\ttemplate<typename FuncType>\n')
 			outs_hpp.write('\t\tFuncType GetProc(const char* symbol, FuncType DefaultBehaviorFunc)\n')
 			outs_hpp.write('\t\t{\n')
@@ -1569,7 +1569,7 @@ def do_parse(parsefiles, glxml):
 		outs_rs[class_name]['impl'].write(f"impl Default for {class_name} {{\n")
 		outs_rs[class_name]['impl'].write("\tfn default() -> Self {\n")
 
-		if last_version is None:
+		if is_first_ver:
 			outs_rs[class_name]['impl'].write("\t\tSelf {\n")
 			outs_rs[class_name]['impl'].write("\t\t\tavailable: false,\n")
 			outs_rs[class_name]['impl'].write('\t\t\tspec: "unknown",\n')
@@ -1601,7 +1601,7 @@ def do_parse(parsefiles, glxml):
 		outs_rs[class_name]['impl'].write('\t\tif self.available {\n')
 		outs_rs[class_name]['impl'].write(f'\t\t\tf.debug_struct("{class_name}")\n')
 		outs_rs[class_name]['impl'].write(f'\t\t\t.field("available", &self.available)\n')
-		if last_version is None:
+		if is_first_ver:
 			outs_rs[class_name]['impl'].write(f'\t\t\t.field("spec", &self.spec)\n')
 			outs_rs[class_name]['impl'].write(f'\t\t\t.field("major_version", &self.major_version)\n')
 			outs_rs[class_name]['impl'].write(f'\t\t\t.field("minor_version", &self.minor_version)\n')
