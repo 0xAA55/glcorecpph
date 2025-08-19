@@ -770,9 +770,6 @@ def do_parse(parsefiles, glxml):
 	def _on_funcproto(x):
 		nonlocal versions
 		funcname = x['funcname']
-		global already_defined
-		if funcname in already_defined: return
-		already_defined |= {funcname}
 		versions[version_name]['funcproto'][funcname] = x
 		versions[version_name]['type2proto'][f'PFN{funcname.upper()}PROC'] = funcname
 
