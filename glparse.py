@@ -8,6 +8,7 @@ prefix = 'gl'
 PREFIX = prefix.upper()
 prefix_ = f'{prefix}_'
 PREFIX_ = f'{PREFIX}_'
+PREFIX_ES_ = f'{PREFIX}_ES_'
 modname = 'glcore'
 rust_derive = '#[derive(Clone, Copy, PartialEq, Eq, Hash)]'
 rust_derive_global = '#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]'
@@ -136,11 +137,15 @@ def do_parse_glxml(glxmlfile):
 		json.dump(parsed, f, indent=4)
 	return parsed
 
-def _is_block_begin(line):
-	return line.startswith(f'#ifndef {PREFIX_}')
+def _is_block_begin(line, PREFIX_):
+	return \
+		line.startswith(f'#ifndef {PREFIX_}') or \
+		line.startswith(f'#ifndef {PREFIX_ES_}')
 
-def _is_block_end(line, version_name):
-	return line == f'#endif /* {PREFIX_}{version_name} */'
+def _is_block_end(line, version_name, PREFIX_):
+	return \
+		line == f'#endif /* {PREFIX_}{version_name} */' or \
+		line == f'#endif /* {PREFIX_ES_}{version_name} */'
 
 def _dismantle_typedef(line):
 	line = line.replace('}', '} ').replace(' *', '*').replace('*', '* ').replace('* * ', '** ').replace('  ', ' ')
@@ -186,14 +191,14 @@ def _chew(filename):
 			if len(line) == 0: continue
 			while '  ' in line: line = line.replace('  ', ' ')
 			if not is_in_block:
-				if _is_block_begin(line):
+				if _is_block_begin(line, PREFIX_):
 					is_in_block = True
 					version_name = line.split('_', 1)[-1]
 					yield {'type': 'version', 'id': version_name}
 				else:
 					print(f'Unknown line: "{line}"')
 				continue
-			elif _is_block_end(line, version_name):
+			elif _is_block_end(line, version_name, PREFIX_):
 				if is_in_proto:
 					print('Unexpected end of version')
 					is_in_proto = False
@@ -201,7 +206,7 @@ def _chew(filename):
 				is_in_block = False
 				continue
 			if not is_in_proto:
-				if line == '#ifdef GL_GLEXT_PROTOTYPES':
+				if line == '#ifdef GL_GLEXT_PROTOTYPES' or line == '#if GL_GLES_PROTOTYPES':
 					is_in_proto = True
 					continue
 				if line.startswith('#define '):
@@ -251,7 +256,7 @@ def _chew(filename):
 				yield protodata
 				continue
 				
-def do_parse(parsefile, glxml):
+def do_parse(parsefiles, glxml):
 	enumtype = {enum: enum_data['type'] for enum, enum_data in glxml['enums'].items()}
 
 	overloadables = sorted([
@@ -509,6 +514,12 @@ def do_parse(parsefile, glxml):
 	outs_rs['global']['predef'].write('/// Alias to `i8`\n')
 	outs_rs['global']['predef'].write('pub type khronos_int8_t = i8;\n')
 	outs_rs['global']['predef'].write('\n')
+	outs_rs['global']['predef'].write('/// Alias to `u8`\n')
+	outs_rs['global']['predef'].write('pub type khronos_uint8_t = u8;\n')
+	outs_rs['global']['predef'].write('\n')
+	outs_rs['global']['predef'].write('/// Alias to `i32`\n')
+	outs_rs['global']['predef'].write('pub type khronos_int32_t = i32;\n')
+	outs_rs['global']['predef'].write('\n')
 	outs_rs['global']['predef'].write('/// Alias to `u16`\n')
 	outs_rs['global']['predef'].write('pub type khronos_uint16_t = u16;\n')
 	outs_rs['global']['predef'].write('\n')
@@ -553,6 +564,8 @@ def do_parse(parsefile, glxml):
 				"khronos_intptr_t",
 				"khronos_int16_t",
 				"khronos_int8_t",
+				"khronos_uint8_t",
+				"khronos_int32_t",
 				"khronos_uint16_t",
 				"khronos_int64_t",
 				"khronos_uint64_t",
@@ -752,11 +765,11 @@ def do_parse(parsefile, glxml):
 		nonlocal firstver_name, firstver_classname, last_version, parsed, outs_hpp, outs_cpp, outs_csharp, outs_rs, csharp_typeconv, rs_traits
 		curver = versions[version_name]
 		class_name = _style_change(version_name)
-		rs_trait_name = version_name.replace('VERSION', 'GL')
+		rs_trait_name = version_name.replace('VERSION', PREFIX)
 		rs_traits += [rs_trait_name]
 		rs_first_trait_name = None
 		if firstver_name:
-			rs_first_trait_name = firstver_name.replace('VERSION', 'GL')
+			rs_first_trait_name = firstver_name.replace('VERSION', PREFIX)
 		func2load = {} # functions to be loaded
 		overloads = {} # key: 'Xxxxx[1,2,3,4][N,I,P,L][s,f,i,d,ub,us,ui]'; value = (rettype, 'Xxxxx', arglist)
 		type2proto = curver['type2proto']
@@ -1626,8 +1639,9 @@ def do_parse(parsefile, glxml):
 		'version_end': _on_version_end
 	}
 
-	for swallow in _chew(parsefile):
-		on_stomach[swallow['type']](swallow)
+	for parsefile in parsefiles:
+		for swallow in _chew(parsefile):
+			on_stomach[swallow['type']](swallow)
 
 	outs_rs['global']['struct'].write("}\n")
 
@@ -1686,7 +1700,7 @@ def do_parse(parsefile, glxml):
 
 if __name__ == '__main__':
 	glxml = do_parse_glxml('gl.xml')
-	hpp, cpp, cs, rs = do_parse('glcore.h', glxml)
+	hpp, cpp, cs, rs = do_parse(['glcore.h', 'gles32.h'], glxml)
 	with open(f'{modname}.hpp', 'wb') as f: f.write(hpp.encode('utf-8'))
 	with open(f'{modname}.cpp', 'wb') as f: f.write(cpp.encode('utf-8'))
 	with open(f'{modname}.cs', 'w') as f: f.write(cs)
