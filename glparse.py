@@ -191,7 +191,7 @@ def _chew(filename):
 			line = line.strip()
 			if len(line) == 0: continue
 			while '  ' in line: line = line.replace('  ', ' ')
-			line = line.replace('GL_APICALL ', 'GLAPI ')
+			line = line.replace('GL_APICALL ', 'GLAPI ').replace('GL_APIENTRY', 'APIENTRY')
 			if not is_in_block:
 				if _is_block_begin(line, PREFIX_):
 					is_in_block = True
@@ -397,7 +397,9 @@ def do_parse(parsefiles, glxml):
 	outs_hpp.write('\tusing khronos_intptr_t = ptrdiff_t;\n')
 	outs_hpp.write('\tusing khronos_int16_t = int16_t;\n')
 	outs_hpp.write('\tusing khronos_int8_t = int8_t;\n')
+	outs_hpp.write('\tusing khronos_uint8_t = uint8_t;\n')
 	outs_hpp.write('\tusing khronos_uint16_t = uint16_t;\n')
+	outs_hpp.write('\tusing khronos_int32_t = int32_t;\n')
 	outs_hpp.write('\tusing khronos_int64_t = int64_t;\n')
 	outs_hpp.write('\tusing khronos_uint64_t = uint64_t;\n')
 	outs_hpp.write('\n')
