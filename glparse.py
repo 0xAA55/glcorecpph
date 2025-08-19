@@ -1040,7 +1040,6 @@ def do_parse(parsefiles, glxml):
 			arglist = funcproto['arglist']
 			membername = funcn[len(prefix):]
 			functype = f'PFN{funcn.upper()}PROC'
-			outs_cpp.write(f'\tstatic {rettype} {calltype} Null_{funcn} ({arglist})')
 
 			rs_ret_type = rs_ret(rettype, use_result = False)
 			rs_call_from_class = f'(self.{membername.lower()})({rs_call_arg(arglist)})'
@@ -1094,10 +1093,6 @@ def do_parse(parsefiles, glxml):
 			outs_rs[class_name]['trait'].write("\n")
 			outs_rs[class_name]['trait'].write(f"\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/{refver}/html/{funcn}.xhtml>\n")
 			outs_rs[class_name]['trait'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type};\n")
-			if rettype == 'void':
-				outs_cpp.write('{ NullFuncPtr(); }\n')
-			else:
-				outs_cpp.write('{ NullFuncPtr(); return 0; }\n')
 		if is_first_ver:
 			outs_rs[class_name]['impl'].write("\t#[inline(always)]\n")
 			outs_rs[class_name]['impl'].write("\tfn get_version(&self) -> (&'static str, u32, u32, u32) {\n")
@@ -1197,6 +1192,11 @@ def do_parse(parsefiles, glxml):
 			pproto = type2proto[functype]
 			proto = pproto[len(prefix):]
 			outs_hpp.write(f'\t\tusing {functype} = {rettype} ({calltype}) ({arglist});\n')
+			outs_cpp.write(f'\tstatic {rettype} {calltype[:-1]} Null_gl{proto} ({arglist})')
+			if rettype == 'void':
+				outs_cpp.write('{ NullFuncPtr(); }\n')
+			else:
+				outs_cpp.write('{ NullFuncPtr(); return 0; }\n')
 			outs_rs[class_name]['predef'].write('\n')
 			outs_rs[class_name]['predef'].write(f'/// The prototype to the OpenGL function `{proto}`\n')
 			outs_rs[class_name]['predef'].write(f'type {functype} = extern "system" fn({rs_arg_fp(arglist)}){rs_ret(rettype, use_result = False)};\n')
