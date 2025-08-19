@@ -1130,6 +1130,10 @@ def do_parse(parsefiles, glxml):
 			outs_rs[class_name]['trait'].write("\tfn get_vendor(&self) -> &'static str;\n")
 			outs_rs[class_name]['trait'].write("\tfn get_renderer(&self) -> &'static str;\n")
 			outs_rs[class_name]['trait'].write("\tfn get_versionstr(&self) -> &'static str;\n")
+			outs_rs['global']['trait'].write("\tfn get_version(&self) -> (&'static str, u32, u32, u32);\n")
+			outs_rs['global']['trait'].write("\tfn get_vendor(&self) -> &'static str;\n")
+			outs_rs['global']['trait'].write("\tfn get_renderer(&self) -> &'static str;\n")
+			outs_rs['global']['trait'].write("\tfn get_versionstr(&self) -> &'static str;\n")
 		else:
 			l_class_name = _style_change(last_version)
 			outs_rs[class_name]['impl'].write(f"\tpub fn new(base: impl {rs_first_trait_name}, mut get_proc_address: impl FnMut(&'static str) -> *const c_void) -> Self {{\n")
