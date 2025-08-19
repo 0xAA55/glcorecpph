@@ -787,9 +787,11 @@ def do_parse(parsefiles, glxml):
 		type2proto = curver['type2proto']
 		proto2type = {v: k for k, v in type2proto.items()}
 		OpenGL = 'OpenGL'
+		refver = 'gl4'
 		if version_name.startswith('ES_'):
 			version_name = f'ES{version_name[len("ES_"):]}'
 			OpenGL = 'OpenGL ES'
+			refver = 'es3.0'
 		try:
 			major, minor, release = version_name.split('_')[1:]
 		except ValueError:
