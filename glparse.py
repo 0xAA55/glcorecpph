@@ -1108,6 +1108,7 @@ def do_parse(parsefiles, glxml):
 			outs_rs[class_name]['impl'].write("\tfn get_shading_language_version(&self) -> &'static str {\n")
 			outs_rs[class_name]['impl'].write("\t\tself.shading_language_version\n")
 			outs_rs[class_name]['impl'].write("\t}\n")
+			outs_rs['global']['trait'].write("\tfn get_shading_language_version(&self) -> &'static str;\n")
 			outs_rs['global']['impl'].write("\t#[inline(always)]\n")
 			outs_rs['global']['impl'].write("\tfn get_shading_language_version(&self) -> &'static str {\n")
 			outs_rs['global']['impl'].write(f"\t\tself.{version_name.lower()}.shading_language_version\n")
