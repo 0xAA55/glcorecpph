@@ -1364,7 +1364,7 @@ def do_parse(parsefiles, glxml):
 			outs_hpp.write('\t\tinline std::string GetVendor() { return Vendor; }\n')
 			outs_hpp.write('\t\tinline std::string GetRenderer() { return Renderer; }\n')
 			outs_hpp.write('\t\tinline std::string GetVersion() { return Version; }\n')
-		else:
+		elif not is_first_es_ver:
 			outs_rs[class_name]['struct'].write('\t/// The function pointer to `glGetError()`\n')
 			outs_rs[class_name]['struct'].write("\tpub geterror: PFNGLGETERRORPROC,\n")
 
@@ -1583,7 +1583,7 @@ def do_parse(parsefiles, glxml):
 			l_class_name = _style_change(last_version)
 			outs_rs[class_name]['impl'].write("\t\tSelf {\n")
 			outs_rs[class_name]['impl'].write("\t\t\tavailable: false,\n")
-		if last_version is not None:
+		if not is_first_ver and not is_first_es_ver:
 			outs_rs[class_name]['impl'].write(f'\t\t\tgeterror: dummy_pfnglgeterrorproc,\n')
 		for funcn, funcproto in curver['funcproto'].items():
 			membername = funcn[len(prefix):]
