@@ -1030,11 +1030,6 @@ def do_parse(parsefiles, glxml):
 			outs_rs[class_name]['impl'].write(f"\tfn glGetError(&self) -> GLenum {{\n")
 			outs_rs[class_name]['impl'].write(f'\t\t(self.geterror)()\n')
 			outs_rs[class_name]['impl'].write('\t}\n')
-			outs_rs['global']['impl'].write(f"\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/{refver}/html/glGetError.xhtml>\n")
-			outs_rs['global']['impl'].write("\t#[inline(always)]\n")
-			outs_rs['global']['impl'].write(f"\tfn glGetError(&self) -> GLenum {{\n")
-			outs_rs['global']['impl'].write(f'\t\t(self.{version_name.lower()}.geterror)()\n')
-			outs_rs['global']['impl'].write('\t}\n')
 		for funcn, funcproto in curver['funcproto'].items():
 			rettype = funcproto['ret']
 			calltype = funcproto['calltype']
