@@ -813,7 +813,8 @@ def do_parse(parsefiles, glxml):
 		outs_rs['global']['struct'].write(f'\t/// Functions from {OpenGL} version {major}.{minor}\n')
 		outs_rs['global']['struct'].write(f'\tpub {global_member[0]}: {global_member[1]},\n')
 		outs_rs['global']['struct'].write(f'\n')
-		outs_rs['global']['impl'].write(f'impl {rs_trait_name} for {rs_global_struct_name} {{\n')
+		outs_rs['global']['impl'].write(f'impl {rs_trait_name}_g for {rs_global_struct_name} {{\n')
+		outs_rs['global']['trait'].write(f'pub trait {rs_trait_name}_g {{\n')
 		outs_rs['global']['members'] += [global_member]
 
 		outs_rs[class_name]['struct'].write(f'\n')
