@@ -12,6 +12,7 @@ PREFIX_ES_ = f'{PREFIX}_ES_'
 modname = 'glcore'
 rust_derive = '#[derive(Clone, Copy, PartialEq, Eq, Hash)]'
 rust_derive_global = '#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]'
+already_defined = set()
 
 def do_parse_glxml(glxmlfile):
 	group_data = {}
@@ -741,6 +742,9 @@ def do_parse(parsefiles, glxml):
 		nonlocal versions
 		target_type = x['target_type']
 		typealias = x['alias']
+		global already_defined
+		if typealias[0] in already_defined: return
+		already_defined |= {typealias[0]}
 		try:
 			versions[version_name]['typealias'][target_type] += typealias
 		except KeyError:
@@ -750,16 +754,25 @@ def do_parse(parsefiles, glxml):
 		nonlocal versions
 		defn = x['id']
 		defv = x['value']
+		global already_defined
+		if defn in already_defined: return
+		already_defined |= {defn}
 		versions[version_name]['define'][defn] = defv
 
 	def _on_functype(x):
 		nonlocal versions
 		typename = x['typename']
+		global already_defined
+		if typename in already_defined: return
+		already_defined |= {typename}
 		versions[version_name]['functype'][typename] = x
 
 	def _on_funcproto(x):
 		nonlocal versions
 		funcname = x['funcname']
+		global already_defined
+		if funcname in already_defined: return
+		already_defined |= {funcname}
 		versions[version_name]['funcproto'][funcname] = x
 		versions[version_name]['type2proto'][f'PFN{funcname.upper()}PROC'] = funcname
 
