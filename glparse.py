@@ -190,6 +190,7 @@ def _chew(filename):
 			line = line.strip()
 			if len(line) == 0: continue
 			while '  ' in line: line = line.replace('  ', ' ')
+			line = line.replace('GL_APICALL ', 'GLAPI ')
 			if not is_in_block:
 				if _is_block_begin(line, PREFIX_):
 					is_in_block = True
@@ -355,6 +356,7 @@ def do_parse(parsefiles, glxml):
 	firstver_classname = None
 	rs_traits = []
 	rs_global_struct_name = "GLCore"
+	OpenGL = 'OpenGL'
 	outs_hpp = io.StringIO()
 	outs_cpp = io.StringIO()
 	outs_csharp = io.StringIO()
@@ -426,7 +428,7 @@ def do_parse(parsefiles, glxml):
 	outs_cpp.write('\n')
 	outs_cpp.write('\tstatic void NullFuncPtr()\n')
 	outs_cpp.write('\t{\n')
-	outs_cpp.write('\t\tthrow NullFuncPtrException("OpenGL function pointer is null.\\n");\n')
+	outs_cpp.write(f'\t\tthrow NullFuncPtrException("{OpenGL} function pointer is null.\\n");\n')
 	outs_cpp.write('\t}\n')
 	outs_cpp.write('\n')
 
@@ -457,7 +459,7 @@ def do_parse(parsefiles, glxml):
 	outs_rs['global']['predef'].write("\tptr::null,\n")
 	outs_rs['global']['predef'].write("};\n")
 	outs_rs['global']['predef'].write('\n')
-	outs_rs['global']['predef'].write('/// The OpenGL error type\n')
+	outs_rs['global']['predef'].write(f'/// The {OpenGL} error type\n')
 	outs_rs['global']['predef'].write('#[derive(Debug, Clone, Copy)]\n')
 	outs_rs['global']['predef'].write('pub enum GLCoreError {\n')
 	outs_rs['global']['predef'].write('\tNullFunctionPointer(&\'static str),\n')
@@ -529,7 +531,7 @@ def do_parse(parsefiles, glxml):
 	outs_rs['global']['predef'].write('/// Alias to `u64`\n')
 	outs_rs['global']['predef'].write('pub type khronos_uint64_t = u64;\n')
 	outs_rs['global']['predef'].write('\n')
-	outs_rs['global']['struct'].write('/// All of the OpenGL functions\n')
+	outs_rs['global']['struct'].write(f'/// All of the {OpenGL} functions\n')
 	outs_rs['global']['struct'].write(f'{rust_derive_global}\n')
 	outs_rs['global']['struct'].write(f'pub struct {rs_global_struct_name} {{\n')
 
@@ -762,7 +764,7 @@ def do_parse(parsefiles, glxml):
 		versions[version_name]['type2proto'][f'PFN{funcname.upper()}PROC'] = funcname
 
 	def _on_version_end(x):
-		nonlocal firstver_name, firstver_classname, last_version, parsed, outs_hpp, outs_cpp, outs_csharp, outs_rs, csharp_typeconv, rs_traits
+		nonlocal OpenGL, version_name, firstver_name, firstver_classname, last_version, parsed, outs_hpp, outs_cpp, outs_csharp, outs_rs, csharp_typeconv, rs_traits
 		curver = versions[version_name]
 		class_name = _style_change(version_name)
 		rs_trait_name = version_name.replace('VERSION', PREFIX)
@@ -774,6 +776,10 @@ def do_parse(parsefiles, glxml):
 		overloads = {} # key: 'Xxxxx[1,2,3,4][N,I,P,L][s,f,i,d,ub,us,ui]'; value = (rettype, 'Xxxxx', arglist)
 		type2proto = curver['type2proto']
 		proto2type = {v: k for k, v in type2proto.items()}
+		OpenGL = 'OpenGL'
+		if version_name.startswith('ES_'):
+			version_name = f'ES{version_name[len("ES_"):]}'
+			OpenGL = 'OpenGL ES'
 		try:
 			major, minor, release = version_name.split('_')[1:]
 		except ValueError:
@@ -787,19 +793,19 @@ def do_parse(parsefiles, glxml):
 		}
 
 		global_member = (version_name.lower(), class_name)
-		outs_rs['global']['struct'].write(f'\t/// Functions from OpenGL version {major}.{minor}\n')
+		outs_rs['global']['struct'].write(f'\t/// Functions from {OpenGL} version {major}.{minor}\n')
 		outs_rs['global']['struct'].write(f'\tpub {global_member[0]}: {global_member[1]},\n')
 		outs_rs['global']['struct'].write(f'\n')
 		outs_rs['global']['impl'].write(f'impl {rs_trait_name} for {rs_global_struct_name} {{\n')
 		outs_rs['global']['members'] += [global_member]
 
 		outs_rs[class_name]['struct'].write(f'\n')
-		outs_rs[class_name]['struct'].write(f'/// Functions from OpenGL version {major}.{minor}\n')
+		outs_rs[class_name]['struct'].write(f'/// Functions from {OpenGL} version {major}.{minor}\n')
 		outs_rs[class_name]['struct'].write(f'{rust_derive}\n')
 		outs_rs[class_name]['struct'].write(f'pub struct {class_name} {{\n')
 		outs_rs[class_name]['impl'].write(f'impl {rs_trait_name} for {class_name} {{\n')
 		outs_rs[class_name]['trait'].write('\n')
-		outs_rs[class_name]['trait'].write(f'/// Functions from OpenGL version {major}.{minor}\n')
+		outs_rs[class_name]['trait'].write(f'/// Functions from {OpenGL} version {major}.{minor}\n')
 		outs_rs[class_name]['trait'].write(f'pub trait {rs_trait_name} {{\n')
 		if last_version is not None:
 			outs_rs[class_name]['trait'].write("\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/gl4/html/glGetError.xhtml>\n")
@@ -938,7 +944,7 @@ def do_parse(parsefiles, glxml):
 			arglist = fpdata['arglist']
 			outs_hpp.write(f'\tusing {functype} = {rettype} ({calltype}) ({arglist});\n')
 			outs_rs['global']['predef'].write('\n')
-			outs_rs['global']['predef'].write(f'/// The prototype to the OpenGL callback function `{functype}`\n')
+			outs_rs['global']['predef'].write(f'/// The prototype to the {OpenGL} callback function `{functype}`\n')
 			outs_rs['global']['predef'].write(f'pub type {functype} = extern "system" fn({rs_arg_fp(arglist)}){rs_ret(rettype, use_result = False)};\n')
 			csharp_delecb.write(f'\t\tpublic delegate {csret(rettype)} {functype} ({csargs(arglist)});\n')
 		outs_hpp.write('\n')
@@ -1308,7 +1314,7 @@ def do_parse(parsefiles, glxml):
 			outs_rs[class_name]['impl'].write('\t}\n')
 		elif 'SHADING_LANGUAGE_VERSION' in curver['define'].keys():
 			outs_hpp.write('\t\tstd::string ShadingLanguageVersion;\n')
-			outs_rs[class_name]['struct'].write('\t/// The version of the OpenGL shading language\n')
+			outs_rs[class_name]['struct'].write(f'\t/// The version of the {OpenGL} shading language\n')
 			outs_rs[class_name]['struct'].write("\tshading_language_version: &'static str,\n")
 			outs_rs[class_name]['struct'].write('\n')
 			csharp_utilities.write('\t\tpublic readonly string ShadingLanguageVersion;\n')
@@ -1317,7 +1323,7 @@ def do_parse(parsefiles, glxml):
 		outs_hpp.write('\t\tbool Available;\n')
 		outs_hpp.write('\n')
 		outs_hpp.write('\tpublic:\n')
-		outs_rs[class_name]['struct'].write(f'\t/// Is OpenGL version {major}.{minor} available\n')
+		outs_rs[class_name]['struct'].write(f'\t/// Is {OpenGL} version {major}.{minor} available\n')
 		outs_rs[class_name]['struct'].write("\tavailable: bool,\n")
 		outs_rs[class_name]['struct'].write('\n')
 		outs_rs[class_name]['impl'].write("\t#[inline(always)]\n")
@@ -1367,7 +1373,7 @@ def do_parse(parsefiles, glxml):
 			outs_rs[class_name]['predef'].write('\n')
 			outs_rs[class_name]['predef'].write(f'/// The dummy function of `{proto}()`\n')
 			outs_rs[class_name]['predef'].write(f'extern "system" fn dummy_{functype.lower()} ({rs_arg(arglist, emit_argn = True, with_self = False)}){rs_ret(rettype, use_result = False)} {{\n')
-			outs_rs[class_name]['predef'].write(f'\tpanic!("OpenGL function pointer `{pproto}()` is null.")\n')
+			outs_rs[class_name]['predef'].write(f'\tpanic!("{OpenGL} function pointer `{pproto}()` is null.")\n')
 			outs_rs[class_name]['predef'].write('}\n')
 
 		for defn, defv in curver['define'].items():
@@ -1383,7 +1389,7 @@ def do_parse(parsefiles, glxml):
 			else:
 				deft = enumtype[f'{PREFIX_}{defn}']
 			outs_hpp.write(f'\t\tstatic constexpr {deft} {defn} = {defv};\n')
-			outs_rs[class_name]['predef'].write(f'/// Constant value defined from OpenGL {major}.{minor}\n')
+			outs_rs[class_name]['predef'].write(f'/// Constant value defined from {OpenGL} {major}.{minor}\n')
 			outs_rs[class_name]['predef'].write(f"pub const GL_{defn}: {deft} = {rs_const_value(defv)};\n")
 			outs_rs[class_name]['predef'].write('\n')
 			if deft == 'GLuint64':
