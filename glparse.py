@@ -1056,10 +1056,6 @@ def do_parse(parsefiles, glxml):
 				outs_rs[class_name]['impl'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type} {{\n")
 				outs_rs[class_name]['impl'].write(f'\t\t{rs_call_from_class}\n')
 				outs_rs[class_name]['impl'].write('\t}\n')
-				outs_rs['global']['impl'].write("\t#[inline(always)]\n")
-				outs_rs['global']['impl'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type} {{\n")
-				outs_rs['global']['impl'].write(f'\t\t{rs_call_from_global}\n')
-				outs_rs['global']['impl'].write('\t}\n')
 			else:
 				outs_rs[class_name]['impl'].write("\t#[inline(always)]\n")
 				outs_rs[class_name]['impl'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type} {{\n")
@@ -1073,21 +1069,6 @@ def do_parse(parsefiles, glxml):
 				outs_rs[class_name]['impl'].write(f'\t\t#[cfg(not(feature = "diagnose"))]\n')
 				outs_rs[class_name]['impl'].write('\t\treturn ret;\n')
 				outs_rs[class_name]['impl'].write('\t}\n')
-				outs_rs['global']['impl'].write("\t#[inline(always)]\n")
-				outs_rs['global']['impl'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type} {{\n")
-				outs_rs['global']['impl'].write(f'\t\tlet ret = process_catch("{funcn}", catch_unwind(||{rs_call_from_global}));\n')
-				outs_rs['global']['impl'].write(f'\t\t#[cfg(feature = "diagnose")]\n')
-				outs_rs['global']['impl'].write(f'\t\tif let Ok(ret) = ret {{\n')
-				outs_rs['global']['impl'].write(f'\t\t\treturn to_result("{funcn}", ret, (self.{version_name.lower()}.geterror)());\n')
-				outs_rs['global']['impl'].write('\t\t} else {\n')
-				outs_rs['global']['impl'].write('\t\t\treturn ret\n')
-				outs_rs['global']['impl'].write('\t\t}\n')
-				outs_rs['global']['impl'].write(f'\t\t#[cfg(not(feature = "diagnose"))]\n')
-				outs_rs['global']['impl'].write('\t\treturn ret;\n')
-				outs_rs['global']['impl'].write('\t}\n')
-			outs_rs[class_name]['trait'].write("\n")
-			outs_rs[class_name]['trait'].write(f"\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/{refver}/html/{funcn}.xhtml>\n")
-			outs_rs[class_name]['trait'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type};\n")
 		if is_first_ver:
 			outs_rs[class_name]['impl'].write("\t#[inline(always)]\n")
 			outs_rs[class_name]['impl'].write("\tfn get_version(&self) -> (&'static str, u32, u32, u32) {\n")
@@ -1132,7 +1113,6 @@ def do_parse(parsefiles, glxml):
 			outs_rs['global']['impl'].write(f"\t\tself.{version_name.lower()}.shading_language_version\n")
 			outs_rs['global']['impl'].write("\t}\n")
 		outs_rs[class_name]['impl'].write("}\n\n")
-		outs_rs['global']['impl'].write('}\n\n')
 		outs_rs[class_name]['impl'].write(f"impl {class_name} {{\n")
 		if is_first_ver:
 			outs_rs[class_name]['impl'].write("\tpub fn new(mut get_proc_address: impl FnMut(&'static str) -> *const c_void) -> Result<Self> {\n")
@@ -1186,6 +1166,8 @@ def do_parse(parsefiles, glxml):
 			arglist = fpdata['arglist']
 			pproto = type2proto[functype]
 			proto = pproto[len(prefix):]
+			membername = proto
+			funcn = pproto
 			outs_hpp.write(f'\t\tusing {functype} = {rettype} ({calltype}) ({arglist});\n')
 			outs_cpp.write(f'\tstatic {rettype} {calltype[:-1]} Null_gl{proto} ({arglist})')
 			if rettype == 'void':
@@ -1276,6 +1258,40 @@ def do_parse(parsefiles, glxml):
 				csharp_deletype.write(f'\t\tpublic delegate {csret(rettype)} {functype} ({csargs(arglist)});\n')
 				csharp_deledef.write(f'\t\tpublic readonly {functype} {proto};\n')
 				csharp_func2load[proto] = functype, pproto
+			rs_ret_type = rs_ret(rettype, use_result = False)
+			rs_call_from_class = f'(self.{membername.lower()})({rs_call_arg(arglist)})'
+			rs_call_from_global = f'(self.{version_name.lower()}.{membername.lower()})({rs_call_arg(arglist)})'
+			if "*const GLubyte" in rs_ret_type:
+				rs_ret_type = " -> Result<&'static str>"
+				rs_call_from_class = "unsafe{CStr::from_ptr(" + rs_call_from_class + " as *const i8)}.to_str().unwrap()"
+				rs_call_from_global = "unsafe{CStr::from_ptr(" + rs_call_from_global + " as *const i8)}.to_str().unwrap()"
+			elif membername == 'GetError':
+				rs_ret_type = " -> GLenum"
+			else:
+				rs_ret_type = rs_ret(rettype, use_result = True)
+			outs_rs['global']['trait'].write("\n")
+			outs_rs['global']['trait'].write(f"\t/// Reference: <https://registry.khronos.org/OpenGL-Refpages/{refver}/html/{funcn}.xhtml>\n")
+			outs_rs['global']['trait'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type};\n")
+			if funcn == 'glGetError':
+				outs_rs['global']['impl'].write("\t#[inline(always)]\n")
+				outs_rs['global']['impl'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type} {{\n")
+				outs_rs['global']['impl'].write(f'\t\t{rs_call_from_global}\n')
+				outs_rs['global']['impl'].write('\t}\n')
+			else:
+				outs_rs['global']['impl'].write("\t#[inline(always)]\n")
+				outs_rs['global']['impl'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type} {{\n")
+				outs_rs['global']['impl'].write(f'\t\tlet ret = process_catch("{funcn}", catch_unwind(||{rs_call_from_global}));\n')
+				outs_rs['global']['impl'].write(f'\t\t#[cfg(feature = "diagnose")]\n')
+				outs_rs['global']['impl'].write(f'\t\tif let Ok(ret) = ret {{\n')
+				outs_rs['global']['impl'].write(f'\t\t\treturn to_result("{funcn}", ret, (self.{version_name.lower()}.geterror)());\n')
+				outs_rs['global']['impl'].write('\t\t} else {\n')
+				outs_rs['global']['impl'].write('\t\t\treturn ret\n')
+				outs_rs['global']['impl'].write('\t\t}\n')
+				outs_rs['global']['impl'].write(f'\t\t#[cfg(not(feature = "diagnose"))]\n')
+				outs_rs['global']['impl'].write('\t\treturn ret;\n')
+				outs_rs['global']['impl'].write('\t}\n')
+		outs_rs['global']['trait'].write('}\n\n')
+		outs_rs['global']['impl'].write('}\n\n')
 		if is_first_ver:
 			outs_hpp.write('\t\tFunc_GetProcAddress GetProcAddress;\n')
 			outs_hpp.write('\t\tint Ver_Major;\n')
