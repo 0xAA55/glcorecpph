@@ -1132,7 +1132,6 @@ def do_parse(parsefiles, glxml):
 			outs_rs['global']['impl'].write(f"\t\tself.{firstver_name.lower()}.get_versionstr()\n")
 			outs_rs['global']['impl'].write("\t}\n")
 		elif 'SHADING_LANGUAGE_VERSION' in curver['define'].keys():
-			outs_hpp.write('\t\tinline std::string GetShadingLanguageVersion() { return ShadingLanguageVersion; }\n')
 			outs_rs[class_name]['trait'].write("\tfn get_shading_language_version(&self) -> &'static str;\n")
 			outs_rs[class_name]['impl'].write("\t#[inline(always)]\n")
 			outs_rs[class_name]['impl'].write("\tfn get_shading_language_version(&self) -> &'static str {\n")
@@ -1186,6 +1185,9 @@ def do_parse(parsefiles, glxml):
 		outs_rs[class_name]['impl'].write('\t}\n')
 
 		outs_hpp.write('\t{\n')
+		if 'SHADING_LANGUAGE_VERSION' in curver['define'].keys():
+			outs_hpp.write('\tpublic:\n')
+			outs_hpp.write('\t\tinline std::string GetShadingLanguageVersion() { return ShadingLanguageVersion; }\n')
 		outs_hpp.write('\tprotected:\n')
 		for functype, fpdata in curver['functype'].items():
 			if functype not in type2proto: continue
@@ -1540,7 +1542,7 @@ def do_parse(parsefiles, glxml):
 			if version_name.startswith('VERSION_'):
 				outs_cpp.write(f'\t\tAvailable = Ver_Major > {major} || (Ver_Major == {major} && (Ver_Minor > {minor} || (Ver_Minor == {minor} && Ver_Release >= {release})));\n')
 				if 'SHADING_LANGUAGE_VERSION' in curver['define'].keys():
-					outs_cpp.write(f'\t\tShadingLanguageVersion = GetString(SHADING_LANGUAGE_VERSION);')
+					outs_cpp.write(f'\t\tShadingLanguageVersion = reinterpret_cast<const char*>(GetString(SHADING_LANGUAGE_VERSION));\n')
 			else:
 				outs_cpp.write(f'\t\tAvailable = true;\n')
 			outs_cpp.write('\t}\n')
