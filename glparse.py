@@ -794,6 +794,8 @@ def do_parse(parsefiles, glxml):
 			major, minor, release = version_name.split('_')[1:]
 		except ValueError:
 			major, minor, release = version_name.split('_')[1:] + ['0']
+		is_first_ver = last_version is None
+		is_first_es_ver = version_name == 'ESVERSION_2_0'
 
 		outs_rs[class_name] = {
 			'predef': io.StringIO(),
