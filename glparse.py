@@ -1169,7 +1169,7 @@ def do_parse(parsefiles, glxml):
 			membername = proto
 			funcn = pproto
 			outs_hpp.write(f'\t\tusing {functype} = {rettype} ({calltype}) ({arglist});\n')
-			outs_cpp.write(f'\tstatic {rettype} {calltype[:-1]} Null_gl{proto} ({arglist})')
+			outs_cpp.write(f'\tstatic {rettype} {calltype[:-1]} Null_{pproto} ({arglist})')
 			if rettype == 'void':
 				outs_cpp.write('{ NullFuncPtr(); }\n')
 			else:
