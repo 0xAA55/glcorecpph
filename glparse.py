@@ -11,7 +11,7 @@ PREFIX_ = f'{PREFIX}_'
 PREFIX_ES_ = f'{PREFIX}_ES_'
 modname = 'glcore'
 rust_derive = '#[derive(Clone, Copy, PartialEq, Eq, Hash)]'
-rust_derive_global = '#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]'
+rust_derive_global = '#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]'
 already_defined = set()
 
 def do_parse_glxml(glxmlfile):
@@ -1712,16 +1712,6 @@ def do_parse(parsefiles, glxml):
 		name, type = rs_global_members[i]
 		outs_rs['global']['impl'].write(f'\t\t\t{name}: {type}::new({first_member_name}, &mut get_proc_address),\n')
 	outs_rs['global']['impl'].write('\t\t})\n')
-	outs_rs['global']['impl'].write('\t}\n')
-	outs_rs['global']['impl'].write('}\n\n')
-
-	outs_rs['global']['impl'].write(f'impl Default for {rs_global_struct_name} {{\n')
-	outs_rs['global']['impl'].write("\tfn default() -> Self {\n")
-	outs_rs['global']['impl'].write('\t\tSelf {\n')
-	for member in rs_global_members:
-		name, type = member
-		outs_rs['global']['impl'].write(f'\t\t\t{name}: {type}::default(),\n')
-	outs_rs['global']['impl'].write('\t\t}\n')
 	outs_rs['global']['impl'].write('\t}\n')
 	outs_rs['global']['impl'].write('}\n\n')
 
