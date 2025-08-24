@@ -1156,11 +1156,11 @@ def do_parse(parsefiles, glxml):
 			outs_rs[class_name]['impl'].write("\t\tSelf {\n")
 			outs_rs[class_name]['impl'].write("\t\t\tavailable: true,\n")
 		if not is_first_ver and not is_first_es_ver:
-			outs_rs[class_name]['impl'].write('\t\t\tgeterror: {let proc = get_proc_address("glGetError"); if proc == null() {dummy_pfnglgeterrorproc} else {unsafe{transmute(proc)}}},\n')
+			outs_rs[class_name]['impl'].write('\t\t\tgeterror: {let proc = get_proc_address("glGetError"); if proc.is_null() {dummy_pfnglgeterrorproc} else {unsafe{transmute(proc)}}},\n')
 		for funcn, funcproto in curver['funcproto'].items():
 			membername = funcn[len(prefix):]
 			functype = f'PFN{funcn.upper()}PROC'
-			outs_rs[class_name]['impl'].write(f'\t\t\t{membername.lower()}: {{let proc = get_proc_address("{funcn}"); if proc == null() {{dummy_{functype.lower()}}} else {{unsafe{{transmute(proc)}}}}}},\n')
+			outs_rs[class_name]['impl'].write(f'\t\t\t{membername.lower()}: {{let proc = get_proc_address("{funcn}"); if proc.is_null() {{dummy_{functype.lower()}}} else {{unsafe{{transmute(proc)}}}}}},\n')
 		if is_first_ver:
 			outs_rs[class_name]['impl'].write('\t\t};\n')
 			outs_rs[class_name]['impl'].write('\t\tret.fetch_version()?;\n')
@@ -1353,7 +1353,7 @@ def do_parse(parsefiles, glxml):
 			outs_rs[class_name]['impl'].write("\t\t}\n")
 			outs_rs[class_name]['impl'].write("\t\tlet mut v: Vec<&str> = verstr.split('.').collect();\n")
 			outs_rs[class_name]['impl'].write('\t\tv.resize(3, "0");\n')
-			outs_rs[class_name]['impl'].write('\t\tv = v.into_iter().map(|x|if x == "" {"0"} else {x}).collect();\n')
+			outs_rs[class_name]['impl'].write('\t\tv = v.into_iter().map(|x|if x.is_empty() {"0"} else {x}).collect();\n')
 			outs_rs[class_name]['impl'].write('\t\tself.major_version = v[0].parse().unwrap();\n')
 			outs_rs[class_name]['impl'].write('\t\tself.minor_version = v[1].parse().unwrap();\n')
 			outs_rs[class_name]['impl'].write('\t\tself.release_version = v[2].parse().unwrap();\n')
