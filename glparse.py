@@ -461,9 +461,11 @@ def do_parse(parsefiles, glxml):
 	outs_rs['global']['predef'].write("\tmem::transmute,\n")
 	outs_rs['global']['predef'].write("\tffi::{c_void, CStr},\n")
 	outs_rs['global']['predef'].write("\tfmt::{self, Debug, Formatter},\n")
-	outs_rs['global']['predef'].write("\tpanic::catch_unwind,\n")
 	outs_rs['global']['predef'].write("\tptr::null,\n")
 	outs_rs['global']['predef'].write("};\n")
+	outs_rs['global']['predef'].write('\n')
+	outs_rs['global']['predef'].write('#[cfg(feature = "catch_nullptr")]\n')
+	outs_rs['global']['predef'].write("use std::panic::catch_unwind;\n")
 	outs_rs['global']['predef'].write('\n')
 	outs_rs['global']['predef'].write(f'/// The {OpenGL} error type\n')
 	outs_rs['global']['predef'].write('#[derive(Debug, Clone, Copy)]\n')
@@ -1063,7 +1065,13 @@ def do_parse(parsefiles, glxml):
 			else:
 				outs_rs[class_name]['impl'].write("\t#[inline(always)]\n")
 				outs_rs[class_name]['impl'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type} {{\n")
+				outs_rs[class_name]['impl'].write(f'\t\t#[cfg(feature = "catch_nullptr")]\n')
 				outs_rs[class_name]['impl'].write(f'\t\tlet ret = process_catch("{funcn}", catch_unwind(||{rs_call_from_class}));\n')
+				outs_rs[class_name]['impl'].write(f'\t\t#[cfg(not(feature = "catch_nullptr"))]\n')
+				if rs_ret_type == ' -> Result<()>':
+					outs_rs[class_name]['impl'].write(f'\t\tlet ret = {{{rs_call_from_class}; Ok(())}};\n')
+				else:
+					outs_rs[class_name]['impl'].write(f'\t\tlet ret = Ok({rs_call_from_class});\n')
 				outs_rs[class_name]['impl'].write(f'\t\t#[cfg(feature = "diagnose")]\n')
 				outs_rs[class_name]['impl'].write(f'\t\tif let Ok(ret) = ret {{\n')
 				outs_rs[class_name]['impl'].write(f'\t\t\treturn to_result("{funcn}", ret, self.glGetError());\n')
@@ -1297,7 +1305,13 @@ def do_parse(parsefiles, glxml):
 			else:
 				outs_rs['global']['impl'].write("\t#[inline(always)]\n")
 				outs_rs['global']['impl'].write(f"\tfn {funcn}({rs_arg(arglist)}){rs_ret_type} {{\n")
+				outs_rs['global']['impl'].write(f'\t\t#[cfg(feature = "catch_nullptr")]\n')
 				outs_rs['global']['impl'].write(f'\t\tlet ret = process_catch("{funcn}", catch_unwind(||{rs_call_from_global}));\n')
+				outs_rs['global']['impl'].write(f'\t\t#[cfg(not(feature = "catch_nullptr"))]\n')
+				if rs_ret_type == ' -> Result<()>':
+					outs_rs['global']['impl'].write(f'\t\tlet ret = {{{rs_call_from_global}; Ok(())}};\n')
+				else:
+					outs_rs['global']['impl'].write(f'\t\tlet ret = Ok({rs_call_from_global});\n')
 				outs_rs['global']['impl'].write(f'\t\t#[cfg(feature = "diagnose")]\n')
 				outs_rs['global']['impl'].write(f'\t\tif let Ok(ret) = ret {{\n')
 				outs_rs['global']['impl'].write(f'\t\t\treturn to_result("{funcn}", ret, (self.{version_name.lower()}.geterror)());\n')
